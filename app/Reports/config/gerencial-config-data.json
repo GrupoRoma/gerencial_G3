@@ -1,0 +1,27 @@
+{
+        "thisFile": "gerencial-config-data",
+        "thisAbout": "Configuração de exibição dos dados do relatório Gerencial",
+        "reportConfigFile": "gerencial",
+        "dataDateFormat": "d/m/Y",
+        "columnsHide": [],
+        "columnsCustomHeader": [{ "columnName": "columnName", "header": "column-header"}],
+        "columnsCustom": [{"name": "xpto", 
+                            "header": "abcd", 
+                            "value": "askdha", 
+                            "condition": [{ "columnName": "columnName", "columnValue": "column-value" }]
+                          }],
+        "columnsFormat": [{"columnName": "codigoConta", "horizontalAlign": "left (Def) | center | right", "mask": ""},
+                           {"columnName": "columnName", "horizontalAlign": "left (Def) | center | right", "mask": ""}
+                          ],
+        "columnDb-calc": [{"columnName": "columnName", "formula": "formula"}],
+        "columnGroup": ["columnName_1", "columnName_2", "columnName_n"],
+        "columnCalculate": {"columnName": {"calc-type": "SUM | AVG | COUNT"}},
+        "columnTotals": ["columnName_1", "columnName_2", "columnName_n"],
+        "totals": {"row": "true",
+                   "column": "true",
+                   "group": "true",
+                   "global": "true"},
+        "callbackRow": "callback-function",
+        "callbackColumn": {"columnName": "columnName", "callback": "callback-function"}
+        
+}

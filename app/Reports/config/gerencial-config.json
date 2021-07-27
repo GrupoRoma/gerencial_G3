@@ -1,0 +1,30 @@
+{
+        "thisFile": "gerencial",
+        "configReport": { "reportName": "GERENCIAL",
+                             "pageFormat": "A4",
+                             "pageSize": "210x297",
+                             "orientation": "landscape",
+                             "repeatHeader": true,
+                             "showPageNumber": false,
+                             "pageNumberOn": "footer",
+                             "printCover": false
+                           },
+        "reportHeader": { "title": "RELATÓRIO GERENCIAL - GRUPO ROMA",
+                             "subTitle": "",
+                             "showDateTime": true,
+                             "showLogo": true,
+                             "logoReport": "./storage/imagens/logo_grupo_relatorios.png",
+                             "logoMaxSize": "90px"
+                           },
+        "reportStyle": { "cssFile": "public/css/report.css",
+                           "headerDataClass": "report-header",
+                           "lineDataClass": "report-data",
+                           "alignNumbers": "text-right",
+                           "alignDate": "text-center",
+                           "subTotals": "report-sub-totals",
+                           "totals":    "report-totals"
+                        },
+        "reportFooter": { "footerText": "",
+                            "footerTextAlign": "text-center"
+                         }
+}

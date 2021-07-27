@@ -1,0 +1,32 @@
+{
+        "thisFile": "gerencialOutrasContas-config",
+        "configReport": { "reportName": "CADASTRO DE OUTRAS CONTAS [EXCEÇÕES]",
+                             "pageFormat": "A4",
+                             "pageSize": "297mm 210mm",
+                             "orientation": "portrait",
+                             "repeatHeader": true,
+                             "showPageNumber": false,
+                             "pageNumberOn": "footer",
+                             "printCover": false
+                           },
+        "reportHeader": { "title": "OUTRAS CONTAS [EXCEÇÕES]",
+                             "subTitle": "GRUPO ROMA",
+                             "showDateTime": true,
+                             "showLogo": true,
+                             "logoReport": "./storage/imagens/logo_grupo_relatorios.png",
+                             "logoMaxSize": "90px"
+                           },
+        "reportStyle": { "cssFile": "./public/css/report.css",
+                           "headerTitle": "report-title",
+                           "headerSubTitle": "report-sub-title",
+                           "headerDataClass": "report-data-header",
+                           "lineDataClass": "report-data",
+                           "alignNumbers": "text-right",
+                           "alignDate": "text-center",
+                           "subTotals": "report-sub-totals",
+                           "totals":    "report-totals"
+                        },
+        "reportFooter": { "footerText": "",
+                            "footerTextAlign": "text-center"
+                         }
+}

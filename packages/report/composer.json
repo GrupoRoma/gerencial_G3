@@ -1,0 +1,19 @@
+{
+        "name": "report/reportbuild",
+        "description": "Gerador de relatórios a partir de um Objeto ou Array com o Data Source",
+        "type": "library",
+        "license": "MIT",
+        "authors": [
+            {
+                "name": "Amauri Batista",
+                "email": "batistaamauri@gmail.com"
+            }
+        ],
+        "require": {},
+        "autoload": {
+                "psr-4": {
+                        "report\\reportbuild\\": "src/"
+                }
+        }
+    }
+    

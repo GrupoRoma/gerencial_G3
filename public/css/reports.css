@@ -1,0 +1,71 @@
+/**
+ *  STYLE FOR REPORTS
+ */
+ 
+/*.report-logo    {   max-width: 90px;  } */
+@media print{
+        @page {
+                bleed: auto;
+        }
+        table           { font-size: 1rem; }
+        table tbody tr  { border-bottom: 1px solid gray;}
+}
+
+#report-area    { max-height: calc(100vh - 125px); overflow-x: auto !important; display: flex; justify-content: center; }
+#report-area table      { width: 90vw; }
+#report-area table, 
+#report-area table th,
+#report-area table td { font-size:  0.9rem; max-width: 15%; word-wrap: normal; }
+
+.report-header          { text-align: center;  width: 100%; }
+.report-title           { font-size: x-large; font-weight: 700; }
+.report-data-hora       { font-size: x-small; margin-top: auto; }
+.report-data-header     { background-color:rgb(200, 200, 200); font-weight: 700; }
+.report-group-row       { line-height: 2.5rem !important; font-weight: 800; font-size: 1.3rem !important; margin-top: auto !important;}
+.report-clear-row,
+.report-clear-row:hover,
+.report-clear-row .table td { border: none !important; background-color: transparent !important; border-top: none !important; }
+.report-totals          { font-weight: 800; font-size: 1rem !important;}
+
+.negative               { color: orangered; }
+
+
+
+/***** RELATÓRIO GERENCIAL ***/
+.table-report   {
+        width: 100%;
+        margin: auto;
+        font-size: 0.8rem;
+        border-collapse: collapse;
+        border-spacing: 1px;
+        border: 0;
+}
+.table-report thead tr { background-color: rgb(170, 170, 170); }
+.table-report thead th {
+        font-weight: bold;
+        text-align: center;
+}
+.table-report tbody .values {
+        text-align: right;
+        min-width: 40px;
+        padding-right: 3px;
+}
+.table-report td, .table-report th {
+        border: 1px solid grey; /* rgb(192, 192, 192);*/
+}
+.table-report tbody tr:hover {
+        background-color:rgb(200, 200, 200);
+}
+.table-report tbody .account {
+        width:280px;
+        min-width: 250px;
+}
+.table-report tbody .row-totals {
+        background-color: rgb(190,190,190);
+        font-weight: bold;
+}
+.table-report tbody .row-totals .account {
+        padding-left: 2rem;
+}
+.moreinfo:hover { cursor: help; }
+

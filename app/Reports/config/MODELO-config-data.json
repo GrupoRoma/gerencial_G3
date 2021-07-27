@@ -1,0 +1,44 @@
+{
+  "thisFile": "lancamentosGerenciais-config-data",
+  "thisAbout": "Configuração de exibição dos dados do relatório de lançamentos gerenciais",
+  "reportConfigFile": "lancamentosGerenciais",
+  "showToolBar": true,
+  "dataDateFormat": "d/m/Y",
+  "selectionData": [
+                          {"columnName": "dataLacamento", "formType": "period", "initalValue": "", "label": "Regional"},
+                          {"columnName": "idEmpresa", "formType": "foreignKey", "initalValue": "", "label": "Empresa" },
+                          {"columnName": "", "formType": "text", "initalValue": "", "label": "labelForm"},
+                          {"columnName": "", "formType": "foreignKey", "initalValue": "", "label": "labelForm"},
+                          {"columnName": "", "formType": "select", "initalValue": "", "label": "labelForm", "values": [{"value":"value", "label": "label"}] },
+                          {"columnName": "", "formType": "checkbox", "initalValue": "", "label": "labelForm", "values": [{"value":"value", "label": "label"}] },
+                          {"columnName": "", "formType": "radio", "initalValue": "", "label": "labelForm", "values": [{"value":"value", "label": "label"}] }
+                   ],
+
+  "columnsHide": ["id","created_at", "updated_at", "anoLancamento", "mesLancamento", "contaContabil", "codigoContaGerencial", "codigoContaContabilERP", "codigoEmpresa", "nomeEmpresa"],
+  "columnsCustomHeader": {"mesAnoLancamento": "Mês/Ano",
+                          "numeroContaGerencial": {"span": 2, "label": "Conta Gerencial"},
+                          "nomeRegional": "Regional",
+                          "codigoGrupoConta": {"span": 2, "label": "Grupo de Conta"},
+                          "subGrupoConta": "Sub Grupo",
+                          "codigoCentroCusto": {"span": 3, "label": "Centro de Custo"},
+                          "valorLancamento": "Valor"},
+  "columnsCustom": [],
+  "columnsWrap": false,        
+  "columnsFormat": [{"valorLancamento":  {"horizontalAlign": "right", 
+                                         "mask": "", 
+                                         "dataType": "negativeNumber", 
+                                         "decimalPrecision": 0}
+                    }
+                   ],
+  "columnDb-calc": [{"columnName": "columnName", "formula": "formula"}],
+  "columnGroup": {"nomeEmpresa": "EMPRESA: ", "subGrupoConta": "SUB-GRUPO DE CONTA: "},
+  "columnCalculate": {"valorLancamento": {"calcType": "SUM"}},
+  "columnTotals": ["valorLancamento"],
+  "totals": {"row": "true",
+             "column": "true",
+             "group": "true",
+             "global": "true"},
+  "callbackRow": "callback-function",
+  "callbackColumn": {"columnName": "columnName", "callback": "callback-function"}
+  
+}

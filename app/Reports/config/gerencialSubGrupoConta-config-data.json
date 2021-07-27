@@ -1,0 +1,30 @@
+{
+        "thisFile": "gerencialSubGrupoConta-config-data",
+        "thisAbout": "Configuração de exibição dos dados do relatório",
+        "reportConfigFile": "gerencialSubGrupoConta",
+        "showToolBar": true,
+        "dataDateFormat": "d/m/Y",
+        "columnsHide": ["created_at", "updated_at"],
+        "columnsCustomHeader": {"id": "Código",
+                                "descricaoSubGrupoConta": "Sub-Grupo de Conta",
+                                "baseMargemBruta": "Margem Bruta",
+                                "subGrupoAtivo": "Ativo",
+                                "created_at": "Criado em",
+                                "updated_at": "Atualizado em"},
+        "columnsCustom": [],
+        "columnsWrap": false,        
+        "columnsFormat": [{"baseMargemBruta":  {"horizontalAlign": "center"}},
+                          {"subGrupoAtivo":  {"horizontalAlign": "center"}}
+                        ],
+        "columnDb-calc": [{"columnName": "columnName", "formula": "formula"}],
+        "columnGroup": {"columnName": "Label "},
+        "columnCalculate": {"columnName": {"calcType": "SUM | COUNT | AVG"}},
+        "columnTotals": [],
+        "totals": {"row": false,
+                   "column": false,
+                   "group": false,
+                   "global": false},
+        "callbackRow": "callback-function",
+        "callbackColumn": {"columnName": "columnName", "callback": "callback-function"}
+        
+}

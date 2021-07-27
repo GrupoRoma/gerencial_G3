@@ -1,0 +1,173 @@
+/**
+ *  ESTILOS DA APLICAÇÃO
+ */
+
+html, body {
+    font-family: 'Nunito','Montserrat', sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    overflow: hide;
+    color: #444;
+    /*background-color: rgb(219, 219, 219);*/
+    background: radial-gradient(circle closest-corner, rgb(255, 255, 255), rgb(184, 184, 184))
+}
+
+#loadSpinner {
+    /*display: none !important;*/
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 90000;
+}
+
+#main-app {
+    width: 100vw;
+    min-height: calc(100vh - 56px);
+    height: calc(100vh - 56px);
+    overflow: auto;
+    padding: 1rem;
+    overflow-x: hidden;
+}
+
+.full-height {
+    top: 0;
+    left: 0;
+    height: 20%;
+}
+.flex-center {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+.position-ref {
+    position: relative;
+}
+
+.dropdown-item:hover {
+    background-color: orangered;
+    color: white !important;
+}
+
+/* width */
+::-webkit-scrollbar { width: 7px; }
+/* Track */
+::-webkit-scrollbar-track { background: #f1f1f146; }
+/* Handle */
+::-webkit-scrollbar-thumb { background: #888; }
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover { background: #FF4500; }
+
+.data-table {
+    height: calc(100vh - 180px);
+    max-height: calc(100vh - 180px);
+    overflow:auto;
+}
+
+#tableData .row-count {
+    font-size: .7rem;
+    color: #555;
+}
+
+#tableData thead {
+    background-color: rgb(253, 215, 145);
+}
+
+.btn-orange {
+    background-color: orangered;
+    color: white;
+}
+
+.btn-large { min-width: 70%; }
+
+.bg-orange {
+    color: white;
+    background-color: orangered;
+}
+
+.bg-orange a, .bg-orange a:link {
+    text-decoration: none;
+    color:inherit;
+}
+.bg-orange a:hover {
+    color: darkgrey;
+}
+.bg-orange .disabled {
+    color:rgb(126, 16, 1);
+}
+.bg-orange .navbar-toggler-icon {
+    color: white !important;
+}
+
+.bg-orange-light {
+    color: white;
+    background-color: rgb(255, 130, 58);
+}
+
+label, [data-nav] { cursor: pointer; }
+
+.filtro-relatorio {
+    max-width: 90%;
+    min-width: 400px;
+    width: 60%;
+    margin: auto;
+    background-color: rgb(131, 131, 131);
+    color: white;
+}
+
+.custom-control-input:checked~.custom-control-label::before { 
+        background-color: orangered !important; 
+        border: 0;
+}
+
+.modal-header-error { 
+    background-color: #f8d7da;
+    color: #721c24;
+}
+input[type="number"] {
+    text-align: right;
+    max-width: 30%;
+    min-width: 200px;
+}
+
+.dropdown .sobre    { display: none; }
+.dropdown:hover .sobre  { display: block; }
+
+.text-orange { color: orangered; }
+.text-gray   { color: grey; }
+
+.tw-1       { font-weight: 100;}
+.tw-2       { font-weight: 200;}
+.tw-3       { font-weight: 300;}
+.tw-4       { font-weight: 400;}
+.tw-5       { font-weight: 500;}
+.tw-6       { font-weight: 600;}
+.tw-7       { font-weight: 700;}
+.tw-8       { font-weight: 800;}
+.tw-9       { font-weight: 900;}
+
+.ts-1       { font-size: 0.1em;}
+.ts-2       { font-size: 0.2em;}
+.ts-3       { font-size: 0.3em;}
+.ts-4       { font-size: 0.4em;}
+.ts-5       { font-size: 0.5em;}
+.ts-6       { font-size: 0.6em;}
+.ts-7       { font-size: 0.7em;}
+.ts-8       { font-size: 0.8em;}
+.ts-9       { font-size: 0.9em;}
+
+.ts1        { font-size: 1em;}
+.ts2        { font-size: 1.2em;}
+.ts3        { font-size: 1.3em;}
+.ts4        { font-size: 1.4em;}
+.ts5        { font-size: 1.5em;}
+.ts6        { font-size: 1.6em;}
+.ts7        { font-size: 1.7em;}
+.ts8        { font-size: 1.8em;}
+.ts9        { font-size: 1.9em;}
+
+.CRN        { color:rgb(153, 153, 153) !important; }
+.DES        { color:rgb(107, 52, 0) !important; font-weight: 800; }
+.IMP        { color:rgb(126, 16, 1) !important; }

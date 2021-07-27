@@ -1,0 +1,39 @@
+{
+        "thisFile": "gerencialCentroCusto-config-data",
+        "thisAbout": "Configuração de exibição dos dados do relatório",
+        "reportConfigFile": "gerencialCentroCusto",
+        "showToolBar": true,
+        "dataDateFormat": "d/m/Y",
+        "columnsHide": ["receitaCustoFI", "created_at", "updated_at"],
+        "columnsCustomHeader": {"id": "Código",
+                                "codigoGrupoConta": "Cód. Conta",
+                                "descricaoGrupoConta": "Grupo de Conta",
+                                "infoGrupoConta": "Detalhe Conta",
+                                "receitaCustoMercadoria": "Receita / Custo",
+                                "ordemExibicao": "Ordem Vertical",
+                                "grupoContaAtivo": "Ativo",
+                                "idSubGrupoConta": "Cód. Sub-Grupo",
+                                "created_at": "Criado em",
+                                "updated_at": "Atualizado em"},
+        "columnsCustom": [],
+        "columnsWrap": false,        
+        "columnsFormat": [{"ordemExibicao":  {"horizontalAlign": "center", 
+                                               "mask": "", 
+                                               "dataType": "", 
+                                               "decimalPrecision": 0}
+                          },
+                          {"idSubGrupoConta": {"horizontalAlign": "center"}}
+                        ]
+                         ,
+        "columnDb-calc": [{"columnName": "columnName", "formula": "formula"}],
+        "columnGroup": {"columnName": "Label "},
+        "columnCalculate": {"columnName": {"calcType": "COUNT"}},
+        "columnTotals": [],
+        "totals": {"row": false,
+                   "column": false,
+                   "group": false,
+                   "global": false},
+        "callbackRow": "callback-function",
+        "callbackColumn": {"columnName": "columnName", "callback": "callback-function"}
+        
+}
