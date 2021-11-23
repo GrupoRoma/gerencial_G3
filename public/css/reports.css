@@ -11,11 +11,11 @@
         table tbody tr  { border-bottom: 1px solid gray;}
 }
 
-#report-area    { max-height: calc(100vh - 125px); overflow-x: auto !important; display: flex; justify-content: center; }
-#report-area table      { width: 90vw; }
+#report-area    { max-height: calc(100vh - 125px); overflow-x: auto !important; display: flex; justify-content: center; overflow-x: auto; }
+#report-area table      { width: 95vw; }
 #report-area table, 
 #report-area table th,
-#report-area table td { font-size:  0.9rem; max-width: 15%; word-wrap: normal; }
+#report-area table td { font-size:  0.9rem; max-width: 95vw; word-wrap: normal; }
 
 .report-header          { text-align: center;  width: 100%; }
 .report-title           { font-size: x-large; font-weight: 700; }
@@ -68,4 +68,3 @@
         padding-left: 2rem;
 }
 .moreinfo:hover { cursor: help; }
-

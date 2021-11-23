@@ -10,6 +10,8 @@ class GerencialPeriodo extends Model
     public  $mesAtivo;
     public  $anoAtivo;
 
+    protected   $situacaoCheck = "'AB', 'LC'";
+
     protected $table = 'gerencialPeriodos';
 
     protected $guarded  = ['id', 'idUsuario'];
@@ -27,13 +29,16 @@ class GerencialPeriodo extends Model
                                 'periodoSituacao'   => 'Situação do Período',
                                 'observacoes'       => 'Observações'];
 
+    public  $columnInfo     = ['periodoSituacao'    => ['AB'    => 'ABERTO PARA LANÇAMENTOS E CONSULTAS (PUBLICADO)',
+                                                        'FC'    => 'FECHADO PARA LANÇAMENTOS A ABERTO A CONSULTAS (PUBLICADO)',
+                                                        'LC'    => 'ABERTO PARA LANÇAMENTOS E FECHADO PARA CONSULTAS (EM ANDAMENTO)']];
     public $columnValue     = ['periodoAtivo'       => ['S' => 'Sim', 'N' => 'Não'],
-                               'periodoSituacao'    => ['AB' => 'Aberto', 'FC' => 'Fechado', 'LC' => 'Aberto para Lançamentos']];
+                               'periodoSituacao'    => ['AB' => 'Em Andamento', 'FC' => 'Publicado', 'LC' => 'Aberto para Lançamentos']];
 
     public $customType      = ['periodoAtivo'       => ['type'      => 'radio',
                                                         'values'    => ['S' => 'Sim', 'N' => 'Não']],
                                'periodoSituacao'    => ['type'      => 'radio',
-                                                        'values'    => ['AB' => '[AB] Aberto', 'FC' => '[FC] Fechado', 'LC' => '[LC] Aberto para Lançamentos']]
+                                                        'values'    => ['AB' => '[AB] Em Andamento', 'FC' => '[PB] Publicado', 'LC' => '[LG] Lançamentos Gerenciais']]
                               ];
 
     public $rules  = ['periodoMes'           => 'required|max:12', 
@@ -66,7 +71,11 @@ class GerencialPeriodo extends Model
         return TRUE;
     }
 
-/** 
+    public function setCheckSituacao(String $situacao = NULL) {
+        $this->situacaoCheck    = "'".($situacao ?? "AB', 'LC")."'";
+    }
+
+    /** 
      *	VALIDAÇÃO DE PERÍODO ABERTO
      *	O período cadastrado deve estar ATIVO = S e
      *	a situação do período dever ser AB: Aberto ou LC: Aberto para Lançamentos
@@ -88,7 +97,7 @@ class GerencialPeriodo extends Model
                         /* PERÍODO ATIVO */
                         WHERE G3_gerencialPeriodos.periodoAtivo   = 'S'
                         /* SITUAÇÂO IGUAL A [AB] Aberto para Consultas e Lançamentos ou [LC] Aberto somente para Lançamentos */
-                        AND   G3_gerencialPeriodos.periodoSituacao IN ('AB','LC')";
+                        AND   G3_gerencialPeriodos.periodoSituacao IN (".$this->situacaoCheck.")";
 
         if (!empty($parMes) && !empty($parAno)) {
             $query .= "AND   G3_gerencialPeriodos.periodoMes     = '$parMes'
@@ -98,6 +107,8 @@ class GerencialPeriodo extends Model
             $dbData     = DB::select($query);
         }
         else $dbData     = DB::select($query);
+
+        $this->situacaoCheck    = "'AB', 'LC'";
 
         if (count($dbData) == 0)    return FALSE;
 
@@ -123,10 +134,13 @@ class GerencialPeriodo extends Model
      *  @return object  (periodo = {mes, ano, mesAno, })
      */
     public function current() {
-        $dbData    = $this->where('periodoAtivo', 'S')
+        $current    = $this->where('periodoAtivo', 'S')
                            ->whereIn('periodoSituacao', ['AB', 'LC'])
-                           ->get();
-        $current    = (object) $dbData[0]->attributes;
+                           ->orderBy('periodoAno')
+                           ->orderBy('periodoMes', 'DESC')
+                           ->first();
+
+        //$current    = (object) $dbData[0]->attributes;
 
         return (object) ['ano'        => $current->periodoAno, 
                          'mes'        => $current->periodoMes, 

@@ -20,7 +20,7 @@ class GerencialCentroCusto extends Model
                                 'ordemExibicao',
                                 'centroCustoAtivo'];
 
-    public $columnAlias     = ['codigoCentroCustoERP'       => 'Código C.Custo',
+    public $columnAlias     = ['codigoCentroCustoERP'       => 'Código C.Custo (Dealernet)',
                                 'descricaoCentroCusto'      => 'Descrição do C. de Custo',
                                 'siglaCentroCusto'          => 'Sigla do C. de Custo',
                                 'centroCustoVendas'         => 'C.Custo de Vendas',

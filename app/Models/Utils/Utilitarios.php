@@ -15,7 +15,7 @@ class Utilitarios extends Model
      */
     public function getParametrosG2() {
 
-        return DB::select("SELECT * FROM GAMA..SGA_PAR_GRUPO WHERE mes_ano = '01/2021' AND COD_SEGM = '5'");
+        return DB::select("SELECT * FROM GAMA..SGA_PAR_GRUPO WHERE mes_ano = '08/2021' AND COD_SEGM = '5'");
     }
 
     /**

@@ -60,6 +60,7 @@ class ImportarContabilidadeController extends Controller
     public function index()
     {
         // Verifica se existem períodos Abertos para lançamento [AB | LC]
+        $this->periodo->setCheckSituacao('AB');
         $periodo = $this->periodo->checkPeriodo();
 
         // Caso não existem períodos abertos exibe mensagem de erro
@@ -93,6 +94,8 @@ class ImportarContabilidadeController extends Controller
      */
     public function processaImportacaoContabil(Request $request) {
 
+        set_time_limit(0);
+
         // Inicializa a transação com o banco de dados
         DB::beginTransaction();
 
@@ -112,19 +115,29 @@ class ImportarContabilidadeController extends Controller
         // Atribui o código da Regional à propriedade codigoRegional da Model ImportarContabilidade
         $this->importa->codigoRegional = $request->codigoRegional;
 
-        //--/ 1. Período Gerencial
+        /**
+         *  1. Período Gerencial
+         *      Identifica e define o período ativo para os processamentos dos dados para o gerencial
+         * 
+         *      1.1 Se não houver período aberto na situação AB: ABERTO ou LC: ABERTO PARA LANÇAMENTOS
+         *          retorna mensagem de erro e não prossegue com o processamento da importação dos dados
+         * 
+         *      1.2 Se houver mais de um período aberto também retorna mensagem de erro para que seja corrigido
+         * 
+         */
+        $this->periodo->setCheckSituacao('AB');
         $periodo = $this->periodo->checkPeriodo($request->mesReferencia, $request->anoReferencia);
         $this->importa->mesAtivo    = $request->mesReferencia;
         $this->importa->anoAtivo    = $request->anoReferencia;
 
-        // Caso não existem períodos abertos exibe mensagem de erro
+        //--/ Sem período aberto
         if ($periodo === false)  {
             $this->importa->errors[] = ['errorTitle'    => 'PERÍODO GERENCIAL',
                                         'error'         => 'Não foi encontrado nenhum período (mês/ano) ativo e aberto [AB | LC]'];
             return view('processamento.validacao', ['errors' => $this->importa->errors]);
         }
 
-        // Se houver mais de um período aberto retorna mensagem de erro solicitando a correção
+        //--/ Mais de um período aberto
         if (count($periodo) > 1) {
             $periodosAbertos = "";
             foreach ($periodo as $row => $data) {
@@ -137,24 +150,40 @@ class ImportarContabilidadeController extends Controller
         }
 
         $mensagem = '';
-        // Importa os lançamentos contábeis se a opção "LANÇAMENTOS FOR SELECIONADA"
+        /**
+         *  PROCESSA A IMPORTAÇÃO DOS DADOS DA CONTABILIDADE SE FOR SELECIONADA A OPÇÃO 
+         *  DE IMPORTAÇÃO DOS LANÇAMENTOS
+         *  
+         *  2.  Define o período para processamento da importação dos dados contábeis
+         * 
+         *  3.  Executa as validações para processamento da importação dos dados contábeis
+         * 
+         *  4.  Executa a o processamento dos dados contábeis
+         *      4.1. Faz a leitura dos lançamentos contábeis e os agrupa conforme os
+         *           parâmetros de Conta Gerencial x Conta Contábil
+         * 
+         *  5.  Executa o ajuste dos valores de RECEITA, CUSTO, IMPOSTOS, BÔNUS e HOLDBACK
+         *      de acordo com as regras de alocação de vendas de veículos por unidade
+         *      e empresa do vendedor
+         * 
+         */
         if (isset($request->importarLancamentos) && $request->importarLancamentos == 1) {
-            //--/ 2. Set Período
+            //--/ 2 
             $this->periodo->setPeriodo($request->mesReferencia, $request->anoReferencia);
 
-            //--/ 3. Processa as validações para importação dos lançamentos contábeis
+            //--/ 3
             if (!$this->validaImportacao($request)) {
                 DB::rollBack();
                 return view('processamento.validacao', ['errors' => $this->importa->errors]);
             }
 
-            //--/ 4. Processa a importação dos lançamentos contábeis
+            //--/ 4
             if (!$this->lancamentosContabeis($request))  {
                 DB::rollBack();
                 return view('processamento.validacao', ['errors' => $this->lancamentoGerencial->errors]);
             }
 
-            //--/ 5. Processa os valores de Receita, Custo, Impostos, Bônus Fábrica, Bônus Empresa e HoldBack
+            //--/ 5
             if (!$this->valoresVeiculos($request))  {
                 DB::rollBack();
                 return view('processamento.validacao', ['errors' => $this->lancamentoGerencial->errors]);
@@ -163,7 +192,15 @@ class ImportarContabilidadeController extends Controller
             $mensagem   .= "<li>Lançamentos contábeis importados com sucesso!</li>";
         } 
 
-        // Processa Exceções de Outras Contas Contábeis se a opção "[EXCEÇÕES] - OUTRAS CONTAS" estiver selecionada
+        /**
+         *  OUTRAS CONTAS
+         * 
+         *  6.  Executa o processamento de importação dos lançamentos contábeis de "OUTRAS CONTAS"
+         *      de acordo com os parâmetros cadastrados na opção EXCEÇÔES > OUTRAS CONTAS CONTABEIS, que trata de
+         *      contas contábeis que não são de resultado.
+         * 
+         */
+        //--/ 6
         if (isset($request->outrasContas) && $request->outrasContas == 1) {
             if (!$this->excecoes->importaOutrasContas($this->importa->codigoRegional, $request)) {
                 DB::rollBack();
@@ -174,7 +211,14 @@ class ImportarContabilidadeController extends Controller
             }
         }
 
-        // Processa Exceções de Outras Contas Contábeis se a opção "[EXCEÇÕES] - OUTRAS CONTAS" estiver selecionada
+        /**
+         *  AMORTIZAÇÕES
+         * 
+         *  7.  Executa o processamento dos parâmetros de amortização, de acordo com os parâmetros
+         *      cadastrados na opção EXCEÇÔES > AMORTIZAÇÕES
+         * 
+         */
+        //--/ 7
         if (isset($request->amortizacao) && $request->amortizacao == 1) {
             if (!$this->excecoes->processaAmortizacao($request)) {
                 DB::rollBack();
@@ -185,20 +229,33 @@ class ImportarContabilidadeController extends Controller
             }
         }
 
-        // Processa os ESTORNOS registrados
+        /**
+         *  ESTORNOS 
+         * 
+         *  8.  Executa o processamento de ESTORNOS das contas gerenciais, de acordo com os parâmetros
+         *      cadastrados na opção PARÂMETROS > ESTORNOS
+         */
+        //--/ 8
         if (isset($request->estorno) && $request->estorno == 1) {
             if (!$this->processaEstornos($request)) {
                 DB::rollBack();
-                return view('processamento.validacao', ['errors' => $this->estorno->errors]);
+                if (isset($this->estorno->errors) && !empty($this->estorno->errors)) {
+                    return view('processamento.validacao', ['errors' => $this->estornoErrors]);
+                }
             }
             else {
-                $mensagem .= "<li>[ESTORNOS] - Estornos processadas com sucesso";
+                $mensagem .= "<li>[ESTORNOS] - Estornos processados com sucesso;</li>";
             }
         }
 
-        // Efetiva o registro dos dados no banco de dados se não ocorrer nenhum erro
+        /**
+         *  SE NÃO OCORRER NENHUM ERRO DURANTE O PROCESSAMENTO DA IMPORTAÇÃO DOS LANÇAMENTOS CONTÁBEIS,
+         *  ENCERRA O PROCESSAMENTO E REGISTRA OS DADOS DA IMPORTAÇÃO NO BANCO DE DADOS
+         * 
+         */
         DB::commit();
 
+        // Retorna a mensagem de conclusão da importação dos lançamentos contábeis
         return ("<span id='showMsg' data-title='IMPORTAÇÃO DE LANÇAMENTOS CONTÁBEIS'
                             data-message='<ul>".$mensagem."</ul>'></span>");
 
@@ -241,7 +298,7 @@ class ImportarContabilidadeController extends Controller
         if(!$this->importa->checkNotaVendedor($this->periodo->mesAtivo, $this->periodo->anoAtivo))        $validate = FALSE;
 
         //--/ 7. Lançamentos contábeis abertos
-#        if(!$this->importa->checkLacamentosAbertos())   $validate = FALSE;
+        if(!$this->importa->checkLacamentosAbertos())   $validate = FALSE;
 
         //--/ 8. Diferença no valor de vendas (notas x lançamentos)
         $valorNotasFiscais = $this->importa->totalVendasNF($this->periodo->mesAtivo, $this->periodo->anoAtivo);
@@ -320,8 +377,11 @@ class ImportarContabilidadeController extends Controller
                     $empresaDestino = GerencialEmpresas::where('codigoEmpresaERP', $dataVeiculos['codigoEmpresaVenda'])->get();
                     $empresaOrigem  = GerencialEmpresas::where('codigoEmpresaERP', $dataVeiculos['codigoEmpresaOrigem'])->get();
 
-                    foreach ($empresaDestino as $dadosEmpresa)  { $empresaDestino   = $dadosEmpresa->id; }
-                    foreach ($empresaOrigem as $dadosEmpresa)   { $empresaOrigem    = $dadosEmpresa->id; }
+                    foreach ($empresaDestino as $dadosEmpresa)  { 
+                        $empresaDestinoID   = $dadosEmpresa->id; 
+                        $nomeEmpresaDestino = $dadosEmpresa->nomeAlternativo;
+                    }
+                    foreach ($empresaOrigem as $dadosEmpresa)   { $empresaOrigemID    = $dadosEmpresa->id; }
 
                     // Verifica se existem contas gerenciais parametrizadas como conta de receita / custo de veiculos
                     if (!isset($contasVeiculos[$dataVeiculos['codigoCentroCusto']])) {
@@ -386,7 +446,7 @@ class ImportarContabilidadeController extends Controller
                         // Define o histórico que será utilizado no registro do lançamento
                         if ($this->historico && !empty($this->historico['historicoPadrao'])) {
                             if ($this->historico['incremental'] == 'S') {
-                                $historicoOrigem    = $this->historico['historicoPadrao'].$historicoIC.' | Destino: '.$empresaDestino[0]->nomeAlternativo;
+                                $historicoOrigem    = $this->historico['historicoPadrao'].$historicoIC.' | Destino: '.$nomeEmpresaDestino;
                                 $historicoDestino   = $this->historico['historicoPadrao'].$historicoIC.' | Origem: '.$dataVeiculos['nomeEmpresaOrigem'];
                             }
                             else {
@@ -409,7 +469,7 @@ class ImportarContabilidadeController extends Controller
                             $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
                                                             'mesLancamento'         => $this->periodo->mesAtivo,
                                                             'codigoContaContabil'   => $infoConta['codigoContaContabil'], //$infoConta['contaContabil'],
-                                                            'idEmpresa'             => $empresaOrigem,
+                                                            'idEmpresa'             => $empresaOrigemID,
                                                             'centroCusto'           => $dataVeiculos['codigoCentroCusto'],
                                                             'idContaGerencial'      => $infoConta['codigoContaGerencial'],
                                                             'creditoDebito'         => ($creditoDebito == 'D' ? 'CRD' : 'DEB'),
@@ -424,7 +484,7 @@ class ImportarContabilidadeController extends Controller
                             $lancamentosVeiculos[]        = ['anoLancamento'          => $this->periodo->anoAtivo,
                                                             'mesLancamento'         => $this->periodo->mesAtivo,
                                                             'codigoContaContabil'   => $infoConta['codigoContaContabil'], //$infoConta['contaContabil'],
-                                                            'idEmpresa'             => $empresaDestino,
+                                                            'idEmpresa'             => $empresaDestinoID,
                                                             'centroCusto'           => $dataVeiculos['codigoCentroCusto'],
                                                             'idContaGerencial'      => $infoConta['codigoContaGerencial'],
                                                             'creditoDebito'         => ($creditoDebito == 'D' ? 'DEB' : 'CRD'),
@@ -453,8 +513,8 @@ class ImportarContabilidadeController extends Controller
                 $empresaDestino = GerencialEmpresas::where('codigoEmpresaERP', $data['codigoEmpresaVenda'])->get();
                 $empresaOrigem  = GerencialEmpresas::where('codigoEmpresaERP', $data['codigoEmpresaOrigem'])->get();
 
-                foreach ($empresaDestino as $dadosEmpresa)  { $empresaDestino   = $dadosEmpresa->id; }
-                foreach ($empresaOrigem as $dadosEmpresa)   { $empresaOrigem    = $dadosEmpresa->id; }
+                foreach ($empresaDestino as $dadosEmpresa)  { $empresaDestinoID   = $dadosEmpresa->id; }
+                foreach ($empresaOrigem as $dadosEmpresa)   { $empresaOrigemID    = $dadosEmpresa->id; }
 
                 // Prepara o histórico do lançamento de acordo com as configurações do tipo de lançamento
                 // 1 - [A - AUTOMÁTICO ...]
@@ -476,7 +536,7 @@ class ImportarContabilidadeController extends Controller
                         $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
                                                         'mesLancamento'         => $this->periodo->mesAtivo,
                                                         'codigoContaContabil'   => $data['contaContabil'],
-                                                        'idEmpresa'             => $empresaOrigem,
+                                                        'idEmpresa'             => $empresaOrigemID,
                                                         'centroCusto'           => $data['codigoCentroCusto'],
                                                         'idContaGerencial'      => $data['codigoContaGerencial'],
                                                         'creditoDebito'         => 'CRD',
@@ -490,7 +550,7 @@ class ImportarContabilidadeController extends Controller
                     $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
                                                      'mesLancamento'         => $this->periodo->mesAtivo,
                                                      'codigoContaContabil'   => $data['contaContabil'],
-                                                     'idEmpresa'             => $empresaDestino,
+                                                     'idEmpresa'             => $empresaDestinoID,
                                                      'centroCusto'           => $data['codigoCentroCusto'],
                                                      'idContaGerencial'      => $data['codigoContaGerencial'],
                                                      'creditoDebito'         => 'DEB',
@@ -510,8 +570,11 @@ class ImportarContabilidadeController extends Controller
                 $empresaDestino = GerencialEmpresas::where('codigoEmpresaERP', $data['codigoEmpresaVenda'])->get();
                 $empresaOrigem  = GerencialEmpresas::where('codigoEmpresaERP', $data['codigoEmpresaOrigem'])->get();
 
-                foreach ($empresaDestino as $dadosEmpresa)  { $empresaDestino   = $dadosEmpresa->id; $nomeEmpresaDestino = $dadosEmpresa->nomeAlternativo; }
-                foreach ($empresaOrigem  as $dadosEmpresa)  { $empresaOrigem    = $dadosEmpresa->id; }
+                foreach ($empresaDestino as $dadosEmpresa)  { 
+                    $empresaDestinoID  = $dadosEmpresa->id; 
+                    $nomeEmpresaDestino = $dadosEmpresa->nomeAlternativo; 
+                }
+                foreach ($empresaOrigem  as $dadosEmpresa)  { $empresaOrigemID    = $dadosEmpresa->id; }
 
                 // Prepara o histórico do lançamento de acordo com as configurações do tipo de lançamento
                 // 1 - [A - AUTOMÁTICO ...]
@@ -567,7 +630,7 @@ class ImportarContabilidadeController extends Controller
                 $empresaOrigem      = GerencialEmpresas::where('codigoEmpresaERP', $data['empresaOrigem'])->get();
 
                 foreach ($empresaVenda  as $dadosEmpresa)  { $nomeEmpresaVenda  = $dadosEmpresa->nomeAlternativo; $codigoEmpresaVenda = $dadosEmpresa->id; }
-                foreach ($empresaOrigem as $dadosEmpresa)  { $empresaOrigem = $dadosEmpresa->id; }
+                foreach ($empresaOrigem as $dadosEmpresa)  { $empresaOrigemID = $dadosEmpresa->id; }
 
                 $contaGerencial     = $this->contaGerencial->contaGerencialVeiculos('BFB');
                 $contaContabil      = GerencialContaContabil::where('gerencialContaContabil.idContaGerencial', $contaGerencial)
@@ -584,8 +647,8 @@ class ImportarContabilidadeController extends Controller
                     // Deduz o valor na origem (Lançamento a Débito)
                     $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
                                                     'mesLancamento'         => $this->periodo->mesAtivo,
-                                                    'codigoContaContabil'   => $contaContabil,
-                                                    'idEmpresa'             => $empresaOrigem,
+                                                    'codigoContaContabil'   => NULL, //$contaContabil,
+                                                    'idEmpresa'             => $empresaOrigemID,
                                                     'centroCusto'           => $this->centroCusto->getCodigoCentroCusto($data['estoque'], 'ERP'),
                                                     'idContaGerencial'      => $contaGerencial,
                                                     'creditoDebito'         => 'DEB',
@@ -598,7 +661,7 @@ class ImportarContabilidadeController extends Controller
                 // Registra o valor no destino (Lançamento a crédito)
                 $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
                                                  'mesLancamento'         => $this->periodo->mesAtivo,
-                                                 'codigoContaContabil'   => $contaContabil,
+                                                 'codigoContaContabil'   => NULL, //$contaContabil,
                                                  'idEmpresa'             => $codigoEmpresaVenda,
                                                  'centroCusto'           => $this->centroCusto->getCodigoCentroCusto($data['estoque'], 'ERP'),
                                                  'idContaGerencial'      => $this->contaGerencial->contaGerencialVeiculos('BFB'),
@@ -625,7 +688,7 @@ class ImportarContabilidadeController extends Controller
 
         $dbData     = GerencialEstorno::where('estornoAtivo', 'S')->get();
 
-        if(!$dbData)  return TRUE;
+        if(!$dbData) return TRUE;
         else {
             // Excluir os lançamentos gerenciais de estorno no período ativo
             $this->lancamentoGerencial->deleteLancamentosGerenciais([['fieldName' => 'idTipoLancamento', 'values' => 14]]);

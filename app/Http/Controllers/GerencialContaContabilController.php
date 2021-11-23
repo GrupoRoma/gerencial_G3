@@ -72,6 +72,10 @@ class GerencialContaContabilController extends Controller
             return response()->json($validate, 500);
         }
 
+        if ($this->contaContabil->validateUnique($request->idContaGerencial, $request->codigoContaContabilERP)) {
+            return response()->json(['Já existe cadastro para a associação para a Conta Contábil e Conta Gerencial informados!'], 500);
+        }
+
         foreach ($this->model->columnList as $column) {
             $gerencialContaContabil->$column = $request->$column;
         }

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Models\Processos\ImportarContabilidade;
 use App\Models\GerencialContaContabil;
 use App\Models\GerencialLancamento;
+use App\Models\GerencialPeriodo;
 
 class GerencialExcessoesController extends Controller
 {
@@ -18,12 +19,14 @@ class GerencialExcessoesController extends Controller
     private $excecoes;
     private $importa;
     private $lancamento;
+    private $periodo;
 
     public function __construct() 
     {
         $this->excecoes     = new GerencialExcecoes;
         $this->importa      = new ImportarContabilidade;
         $this->lancamento   = new GerencialLancamento;
+        $this->periodo      = new GerencialPeriodo;
     }
 
     /**
@@ -40,58 +43,64 @@ class GerencialExcessoesController extends Controller
     public function importaOutrasContas(int $codigoRegional, Request $request) {
         $dbContas = $this->excecoes->getOutrasContas($codigoRegional);
 
-        // Determina o período ativo
-        $this->importa->setPeriodo($request->mesReferencia, $request->anoReferencia);
-
-        // Processas as exceções para registro no gerencial
-        $lancamentos = [];
-        foreach ($dbContas as $row => $conta) {
-
-            // [{"fieldName": fieldName, "fieldCriteria": [=,<>,>=,<=,...], "values": values, "andOr": 'AND [default]'}]
-            $filterData[]   = ["fieldName" => "G3_gerencialRegional.id", "values" => $conta['codigoRegional']];
-            $filterData[]   = ["fieldName" => "Lancamento.Lancamento_PlanoContaCod", "values" => $conta['codigoContaContabilOrigem']];
-            
-            // Carrega o saldo dos lançamentos contabeis para a exceção
-            if (!$this->importa->getSaldoContabil($filterData)) {
-                $this->errors[] = ['errorTitle' => 'OUTRAS CONTAS [SALDO CONTÁBIL]', 'error'   => 'Não foram encontrados lançamentos para as exceções de outras contas'];
-                return view('processamento.validacao', ['errors' => $this->errors]);
-            }
-
-            foreach ($this->importa->dataLancamentos as $index => $saldo) {
-                /* Identifica a conta gerencial associada */
-                $dbContaGerencial = GerencialContaContabil::where('codigoContaContabilERP', $conta['codigoContaContabilOrigem'])
-                                                        ->get();
-
-                /* Calcula a proporção do valor da origem a ser registrado */
-                $valorOrigem = $saldo->valorLancamento * ($conta['percentualSaldoOrigem'] / 100);
-
-                $lancamentos[]  = ['mesLancamento'         => $this->importa->mesAtivo,
-                                    'anoLancamento'        => $this->importa->anoAtivo,
-                                    'idEmpresa'            => $conta['codigoEmpresaDestino'],
-                                    'centroCusto'          => $conta['codigoCentroCustoDestino'],
-                                    'idContaGerencial'     => $dbContaGerencial[0]->idContaGerencial,
-                                    'creditoDebito'        => $saldo->creditoDebito,
-                                    'valorLancamento'      => $valorOrigem * ($conta['percentualSaldoDestino'] / 100),
-                                    'historicoLancamento'  => '[EXCEÇÕES | OUTRAS CONTAS] '.$saldo->historicoLancamento.' R$ ORIGEM: '.number_format($valorOrigem,2,',','.'),
-                                    'idTipoLancamento'     => $saldo->idTipoLancamento,
-                                    'codigoContaContabil'  => $saldo->codigoContaContabil];
-            }
-        }
-
-        // Exclui os lançamentos gerados anteriormente, caso o processamento esteja sendo executado novamente
-        $this->lancamento->deleteLancamentosGerenciais([['fieldName' => 'idTipoLancamento', 'values' => 11],
-                                                    ['fieldName' => 'historicoLancamento', 'fieldComparison' => 'like ', 'values' => "'%EXCEÇÕES | OUTRAS CONTAS%'"]]);
-
-        // Grava os lançamentos de outras contas contábeis
-        if ($this->lancamento->gravaLancamento($lancamentos)) {
-            $this->errors[] = ['errorTitle' => 'OUTRAS CONTAS [SALDO CONTÁBIL]', 'error'   => 'Saldo importado com sucesso!'];
-            return TRUE;
+        if (!$dbContas) {
+            $this->errors[] = ['errorTitle' => 'PROCESSAMENTO DE EXCEÇÔES | OUTRAS CONTAS', 'error'   => 'Não foram encontradas exceções de outras contas cadastradas para processamento.'];
+            return view('processamento.validacao', ['errors' => $this->errors]);
         }
         else {
-            $this->errors[] = ['errorTitle' => 'OUTRAS CONTAS [SALDO CONTÁBIL]', 'error'   => 'Ocorreu um erro na importação do saldo de Outras Contas. verifique os parâmetros e tente novamente.'];
-            return FALSE;
-        }
 
+            // Determina o período ativo
+            $this->periodo->setPeriodo($request->mesReferencia, $request->anoReferencia);
+
+            // Processas as exceções para registro no gerencial
+            $lancamentos = [];
+            foreach ($dbContas as $row => $conta) {
+
+                // [{"fieldName": fieldName, "fieldCriteria": [=,<>,>=,<=,...], "values": values, "andOr": 'AND [default]'}]
+                $filterData[]   = ["fieldName" => "G3_gerencialRegional.id", "values" => $conta['codigoRegional']];
+                $filterData[]   = ["fieldName" => "Lancamento.Lancamento_PlanoContaCod", "values" => $conta['codigoContaContabilOrigem']];
+                
+                // Carrega o saldo dos lançamentos contabeis para a exceção
+                if (!$this->importa->getSaldoContabil($filterData)) {
+                    $this->errors[] = ['errorTitle' => 'OUTRAS CONTAS [SALDO CONTÁBIL]', 'error'   => 'Não foram encontrados lançamentos para as exceções de outras contas'];
+                    return view('processamento.validacao', ['errors' => $this->errors]);
+                }
+
+                foreach ($this->importa->dataLancamentos as $index => $saldo) {
+                    /* Identifica a conta gerencial associada */
+                    $dbContaGerencial = GerencialContaContabil::where('codigoContaContabilERP', $conta['codigoContaContabilOrigem'])
+                                                            ->get();
+
+                    /* Calcula a proporção do valor da origem a ser registrado */
+                    $valorOrigem = $saldo->valorLancamento * ($conta['percentualSaldoOrigem'] / 100);
+
+                    $lancamentos[]  = ['mesLancamento'         => $this->importa->mesAtivo,
+                                        'anoLancamento'        => $this->importa->anoAtivo,
+                                        'idEmpresa'            => $conta['codigoEmpresaDestino'],
+                                        'centroCusto'          => $conta['codigoCentroCustoDestino'],
+                                        'idContaGerencial'     => $dbContaGerencial[0]->idContaGerencial,
+                                        'creditoDebito'        => $saldo->creditoDebito,
+                                        'valorLancamento'      => $valorOrigem * ($conta['percentualSaldoDestino'] / 100),
+                                        'historicoLancamento'  => '[EXCEÇÕES | OUTRAS CONTAS] '.$saldo->historicoLancamento.' R$ ORIGEM: '.number_format($valorOrigem,2,',','.'),
+                                        'idTipoLancamento'     => $saldo->idTipoLancamento,
+                                        'codigoContaContabil'  => $saldo->codigoContaContabil];
+                }
+            }
+
+            // Exclui os lançamentos gerados anteriormente, caso o processamento esteja sendo executado novamente
+            $this->lancamento->deleteLancamentosGerenciais([['fieldName' => 'idTipoLancamento', 'values' => 11],
+                                                        ['fieldName' => 'historicoLancamento', 'fieldComparison' => 'like ', 'values' => "'%EXCEÇÕES | OUTRAS CONTAS%'"]]);
+
+            // Grava os lançamentos de outras contas contábeis
+            if ($this->lancamento->gravaLancamento($lancamentos)) {
+                $this->errors[] = ['errorTitle' => 'OUTRAS CONTAS [SALDO CONTÁBIL]', 'error'   => 'Saldo importado com sucesso!'];
+                return TRUE;
+            }
+            else {
+                $this->errors[] = ['errorTitle' => 'OUTRAS CONTAS [SALDO CONTÁBIL]', 'error'   => 'Ocorreu um erro na importação do saldo de Outras Contas. verifique os parâmetros e tente novamente.'];
+                return FALSE;
+            }
+        }
     } //-- importaOutrasContas --//
 
 
@@ -107,11 +116,14 @@ class GerencialExcessoesController extends Controller
         $estornaAmortizacao = FALSE;
 
         // Determina o período ativo
-        $this->importa->setPeriodo($request->mesReferencia, $request->anoReferencia);
+        $this->periodo->setPeriodo($request->mesReferencia, $request->anoReferencia);
 
         // Carrega as amrotizações cadastradas, ativas e com parcelas amortizadas 
         // menor que o total de parcelas
-        if (!$dbData = $this->excecoes->getAmortizacoes())  return FALSE;
+        if (!$dbData = $this->excecoes->getAmortizacoes()) {
+            $this->errors[] = ['errorTitle' => 'AMORTIZAÇÃO', 'error'   => 'Nenhuma amortização encontrada!'];
+            return FALSE;
+        } 
         else {
 
             // Verifica se existem lançamentos de amortização no período para

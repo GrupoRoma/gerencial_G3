@@ -17,13 +17,15 @@ class GerencialTipoLancamento extends Model
                                 'sobreTipoLancamento', 
                                 'historicoTipoLancamento', 
                                 'historicoIncremental', 
-                                'tipoLancamentoAtivo'];
+                                'tipoLancamentoAtivo',
+                                'ordemProcessamento'];
 
     public $columnAlias     = ['descricaoTipoLancamento'    => 'Descrição',
                                 'sobreTipoLancamento'       => 'Sobre',
                                 'historicoTipoLancamento'   => 'Histórico Padrão',
                                 'historicoIncremental'      => 'Histórico Incremental',
-                                'tipoLancamentoAtivo'       => 'Tipo de Lançamento Ativo'];
+                                'tipoLancamentoAtivo'       => 'Tipo de Lançamento Ativo',
+                                'ordemProcessamento'        => 'Ordem de Processamento'];
 
     public $columnValue     = ['historicoIncremental'       => ['S' => 'Sim', 'N' => 'Não'],
                                 'tipoLancamentoAtivo'       => ['S' => 'Sim', 'N' => 'Não']];
@@ -36,11 +38,13 @@ class GerencialTipoLancamento extends Model
                         'sobreTipoLancamento'       => 'nullable', 
                         'historicoTipoLancamento'   => 'nullable', 
                         'historicoIncremental'      => 'required', 
-                        'tipoLancamentoAtivo'       => 'required'];
+                        'tipoLancamentoAtivo'       => 'required',
+                        'ordemProcessamento'       => 'required'];
 
     public $rulesMessage    = [ 'descricaoTipoLancamento'   => 'DESCRIÇÃO: Obrigatório',
                                 'historicoIncremental'      => 'HISTÓRICO INCREMENTAL: Obrigatório',
-                                'tipoLancamentoAtivo'       => 'TIPO DE LANÇAMENTO ATIVO: Obrigatório'
+                                'tipoLancamentoAtivo'       => 'TIPO DE LANÇAMENTO ATIVO: Obrigatório',
+                                'ordemProcessamento'        => 'ORDER DE PROCESSAMENTO: Obrigatório'
                             ];
 
     public function getHistoricoLancamento(int $codigoTipoLancamento) {

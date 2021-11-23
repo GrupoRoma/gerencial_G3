@@ -3,8 +3,10 @@
 namespace App\Reports;
 use Exception;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
+
+use Illuminate\Support\Arr;
 use phpDocumentor\Reflection\Types\Boolean;
 
 class ReportGenerator extends Controller
@@ -178,6 +180,12 @@ class ReportGenerator extends Controller
         try {
             // Converte os dados em objeto
             $this->reportData       = (object) $dataObject;
+
+            // Verifica se existem dados para exibição
+            if (count($dataObject) == 0 || empty($dataObject)) {
+                $this->error    = "Nenhuma informação encontrada!";
+                return FALSE;
+            }
 
             // Identifica e associa o nome das colunas do objeto de dados
             $this->dataColumnNames  = array_keys((array) $dataObject[0]);
@@ -430,6 +438,41 @@ class ReportGenerator extends Controller
 
     }
 
+    protected function dataBaseColumnValue(String $columnName, $values = NULL) {
+        $returnValue = '';
+
+        foreach ($this->configData->columnDataBaseValue as $i => $column) {
+            if ($column->columnName == $columnName) {
+                $columnValues = DB::table($column->tableFrom)
+                                    ->select($column->columnValue)
+                                    ->where(function($query) use($column, $values) {
+                                        if(isset($column->conditionRaw) && !empty($column->conditionRaw)) {
+                                            foreach ($column->conditionRaw as $idx => $condition) {
+                                                $query->whereRaw($condition);
+                                            }
+                                        }
+
+                                        if (isset($column->conditionCol) && !empty($column->conditionCol)) {
+                                            if (isset($column->multipleValue) && $column->multipleValue) {
+                                                $query->whereIn($column->conditionCol, explode(',', $values));
+                                            }
+                                        }
+                                    })
+                                    ->orderBy($column->columnValue)
+                                    ->get();
+
+                if ($columnValues && $columnValues->count() > 0) {
+                    foreach ($columnValues as $row => $dbData) {
+                        $returnValue .= $dbData->{$column->columnValue}.'<br>';
+                    }
+                }
+                return $returnValue;
+            }
+        }
+
+        return FALSE;
+    }
+
 /****************************************** REPORT BUILDERS **********************************/
 
 
@@ -593,10 +636,8 @@ class ReportGenerator extends Controller
      *  Processa os dados do relatório e prepara para montar o relatório
      */
     protected function bodyRows() {
-
-        //$bodyData   = '<TBODY>';
         $bodyRows   = '';
-
+        
         foreach ($this->reportData as $dataRow => $dataColumnValue) {
 
             $bodyData   = '';
@@ -609,20 +650,28 @@ class ReportGenerator extends Controller
                 // CÁLCULOS
                 $this->reportCalculate($dataColumn, $dataColumnValue->$dataColumn);
 
-                // DATA CSV EXPORT
-                $csvData    .= $dataColumnValue->$dataColumn.';';
-
+                unset($reportColumnValue);
                 if (!in_array($dataColumn, $this->configData->columnsHide)) {
-                    $bodyData   .= '<td class="body-data-col text-'.($this->configColumnsFormat->$dataColumn->horizontalAlign ?? "left ").'" ';
+                    $bodyData   .= '<td class="body-data-col align-baseline text-'.($this->configColumnsFormat->$dataColumn->horizontalAlign ?? "left ").'" ';
 
                     if (!$this->configData->columnsWrap)    $bodyData .= " NOWRAP ";
 
-                    // Horizontal align
+                    // VALOR DA COLUNA OBTIDO EM OUTRA TABELA DE DADOS
+                    $reportColumnValue = $dataColumnValue->$dataColumn;
+                    if (isset($this->configData->columnDataBaseValue) && count($this->configData->columnDataBaseValue) > 0) {
+                        if ($columnValue = $this->dataBaseColumnValue($dataColumn, $dataColumnValue->$dataColumn)) {
+                            $reportColumnValue = $columnValue;
+                        }
+                    }
 
                     $bodyData   .= '>';
-                    $bodyData   .= $this->formatData($dataColumn, $dataColumnValue->$dataColumn);
+                    $bodyData   .= $this->formatData($dataColumn, $reportColumnValue);
                     $bodyData   .= '</td>';
                 }
+
+                // DATA CSV EXPORT
+                $csvData    .= htmlentities(str_replace('<br>', ', ',($reportColumnValue ?? $dataColumnValue->$dataColumn)).';',ENT_QUOTES);
+
             }
 
             $bodyRows   .= '<TR class="'.$this->cssLineData.' body-row">';
@@ -632,6 +681,7 @@ class ReportGenerator extends Controller
             // DATA CSV EXPORT
             $this->reportCSVData    .= substr($csvData,0,-1)."\r\n";
         }
+//dd($this->reportCSVData, $csvData);
 
         $this->built_body = $bodyRows;
     }

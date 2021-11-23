@@ -13,14 +13,14 @@ class GerencialTabelaRateio extends Model
     protected   $table      = 'gerencialTabelaRateios';
     protected   $guarded    = ['id'];
 
-    public  $viewTitle      = 'Tabela de Rateio';
-    public  $columnList     = ['descricao', 'idEmpresa', 'tabelaAtiva'];
-    public  $columnAlias    = ['descricao' => 'Nome da Tabela de rateio', 'idEmpresa' => 'Empresa', 'tabelaAtiva' => 'Tabela de Rateio Ativa'];
+    public  $viewTitle      = 'Tabela de Referência';
+    public  $columnList     = ['descricao', 'tabelaAtiva'];
+    public  $columnAlias    = ['descricao' => 'Nome da Tabela de rateio', /*'idEmpresa' => 'Empresa',*/ 'tabelaAtiva' => 'Tabela de Rateio Ativa'];
     public  $columnValue    = [];  // ['empresaAtiva'               => ['S' => 'Sim', 'N' => 'Não']];
     public  $customType     = ['tabelaAtiva'   => ['type'      => 'radio', 'values'    => ['S' => 'Sim', 'N' => 'Não']]];
-    public  $rules          = ['descricao'  => 'required', 'idEmpresa'  => 'required', 'tabelaAtiva' => 'required'];
+    public  $rules          = ['descricao'  => 'required', /*'idEmpresa'  => 'required',*/ 'tabelaAtiva' => 'required'];
     public $rulesMessage    = [ 'descricao'     => 'NOME DA TABELA DE RATEIO: Obrigatório',
-                                'idEmpresa'     => 'EMPRESA: Obrigatório',
+                                /*'idEmpresa'     => 'EMPRESA: Obrigatório',*/
                                 'tabelaAtiva'   => 'TABELA DE RATEIO ATIVA: Obrigatório'
                             ];
  

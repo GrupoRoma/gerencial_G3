@@ -16,7 +16,7 @@
                              "logoReport": "./storage/imagens/logo_grupo_relatorios.png",
                              "logoMaxSize": "90px"
                            },
-        "reportStyle": { "cssFile": "./public/css/report.css",
+        "reportStyle": { "cssFile": "css/report.css",
                            "headerTitle": "report-title",
                            "headerSubTitle": "report-sub-title",
                            "headerDataClass": "report-data-header",

@@ -84,7 +84,19 @@ class GerencialTabelaRateioController extends Controller
         // Grava os centros de custos e percentuais associados
         $centroCustoPercentuais = json_decode($request->centroCustoPerc);
         $percentuais            = [];
-        foreach ($centroCustoPercentuais as $codigoCentroCusto => $percentual) {
+        foreach ($centroCustoPercentuais as $codigoEmpresa => $centrosCusto) {
+            foreach ($centrosCusto as $codigoCentroCusto => $percentual) {
+                $dataPercentual = new GerencialTabelaRateioPercentual();
+                $dataPercentual->idTabela       = $gerencialTabela->id;
+                $dataPercentual->idEmpresa      = $codigoEmpresa;
+                $dataPercentual->idCentroCusto  = $codigoCentroCusto;
+                $dataPercentual->percentual     = $percentual;
+    
+                $percentuais[]  = $dataPercentual;
+            }
+        }
+
+/*         foreach ($centroCustoPercentuais as $codigoCentroCusto => $percentual) {
             $dataPercentual = new GerencialTabelaRateioPercentual();
             $dataPercentual->idTabela       = $gerencialTabela->id;
             $dataPercentual->idCentroCusto  = $codigoCentroCusto;
@@ -92,7 +104,7 @@ class GerencialTabelaRateioController extends Controller
 
             $percentuais[]  = $dataPercentual;
         }
-
+ */
         $gerencialTabela->gerencialTabelaRateioPercentual()->saveMany($percentuais);
 
         $request->session()->flash('message', 'Dados gravados com sucesso!');

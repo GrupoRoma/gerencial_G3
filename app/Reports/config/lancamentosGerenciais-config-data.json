@@ -4,9 +4,10 @@
         "reportConfigFile": "lancamentosGerenciais",
         "showToolBar": true,
         "dataDateFormat": "d/m/Y",
-        "selectionData-teste": [
-                                {"columnName": "dataLacamento", "formType": "period", "initalValue": "", "label": "Período"},
-                                {"columnName": "idEmpresa", "formType": "foreignKey", "initalValue": "", "label": "Empresa" }
+        "selectionData": [
+                                {"columnName": "periodoLancamento", "formType": "periodoGerencial", "initalValue": "", "label": "Período"},
+                                {"columnName": "idEmpresa", "formType": "foreignKey", "initalValue": "", "label": "Empresa" },
+                                {"columnName": "idTipoLancamento", "formType": "foreignKey", "initalValue": "", "label": "Tipo de Lançamento" }
                          ],
 
         "columnsHide": ["id","created_at", "updated_at", "anoLancamento", "mesLancamento", "contaContabil", "codigoContaGerencial", "codigoContaContabilERP", "codigoEmpresa", "nomeEmpresa", "codigoEmpresaERP"],
@@ -16,7 +17,9 @@
                                 "codigoGrupoConta": {"span": 2, "label": "Grupo de Conta"},
                                 "subGrupoConta": "Sub Grupo",
                                 "codigoCentroCusto": {"span": 3, "label": "Centro de Custo"},
-                                "valorLancamento": "Valor"},
+                                "valorLancamento": "Valor",
+                                "numeroLote": "Lote",
+                                "tipoLancamento": "Tipo Lançamento"},
         "columnsCustom": [],
         "columnsWrap": true,        
         "columnsFormat": [{"valorLancamento":  {"horizontalAlign": "right", 

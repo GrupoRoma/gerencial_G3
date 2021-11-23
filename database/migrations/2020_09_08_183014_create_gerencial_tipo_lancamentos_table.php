@@ -20,6 +20,8 @@ class CreateGerencialTipoLancamentosTable extends Migration
             $table->string('historicoTipoLancamento')->nullable()->comment('Histórico padrão para o tipo de lançamento');
             $table->char('historicoIncremental',1)->default('N')->comment('Identifica se o histórico do tipo de lançamento deve complementar outros históricos');
             $table->char('tipoLancamentoAtivo',1)->default('S')->comment('Identifica se o tipo de lançamento está ativo');
+
+            $table->int('ordemProcessamento')->comment('Ordem de processamento para registro dos lançamentos');
 #            $table->unsignedBigInteger('idUsuario_created')->comment('Identifica o usuário que criou o registro');
 #            $table->foreign('idUsuario_created')->references('id')->on('users');
             $table->timestamps();

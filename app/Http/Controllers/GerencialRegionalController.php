@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\GerencialRegional;
+use App\Models\Utils\Utilitarios;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -14,8 +16,12 @@ class GerencialRegionalController extends Controller
     protected $model;
     protected $tableName;
 
+    protected   $utils;
+
     public function __construct(Request $request)
     {
+        $this->utils                = new Utilitarios;
+        
         // Define a ordenação dos dados
         if (!isset($request->columnOrder) || empty($request->columnOrder) ) $request->columnOrder = 'descricaoRegional';
         $this->orderColumn = $request->columnOrder;

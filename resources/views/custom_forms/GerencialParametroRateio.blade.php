@@ -162,7 +162,7 @@ if (isset($tableData->descricaoParametro)) {
         <div class="col-xs-12 col-sm-6 col-md-6 form-group">
                 <h4> DESTINO </h4>
                 <label for="codigoEmpresaDestino">Empresa(s)</label>
-                {!!$model->custom_codigoEmpresaDestino(($values['codigoEmpresaOrigem'] ?? ''))!!}
+                {!!$model->custom_codigoEmpresaDestino(($values['codigoEmpresaDestino'] ?? ''))!!}
 
                 <label for="codigoContaGerencialDestino">Conta Gerencial</label>
                 {!!$model->custom_codigoContaGerencialDestino(($values['codigoContaGerencialDestino'] ?? ''))!!}

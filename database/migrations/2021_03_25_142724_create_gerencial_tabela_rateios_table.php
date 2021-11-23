@@ -16,8 +16,11 @@ class CreateGerencialTabelaRateiosTable extends Migration
         Schema::create('gerencialTabelaRateios', function (Blueprint $table) {
             $table->id();
             $table->string('descricao', 50)->comment('Descrição para identificação da tabela de rateio');
-            $table->unsignedBigInteger('idEmpresa');
-            $table->foreign('idEmpresa')->references('id')->on('gerencialEmpresas');
+            
+            // Movido para a tabela GERENCIALTABELARATEIOPERCENTUAL
+//            $table->unsignedBigInteger('idEmpresa');
+//            $table->foreign('idEmpresa')->references('id')->on('gerencialEmpresas');
+
             $table->char('tabelaAtiva', 1)->comment('Identifica se a tabela de rateio está ativa');
             $table->timestamps();
         });

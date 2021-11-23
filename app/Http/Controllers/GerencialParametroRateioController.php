@@ -26,7 +26,7 @@ class GerencialParametroRateioController extends Controller
         if (!isset($request->columnOrder) || empty($request->columnOrder) ) $request->columnOrder = 'descricaoParametro';
         $this->orderColumn = $request->columnOrder;
         
-        $this->tableData  = GerencialParametroRateio::orderby($request->columnOrder)->paginate(10);  //->get();
+        $this->tableData  = GerencialParametroRateio::orderby($request->columnOrder)->get();        //->paginate(10);  //->get();
         $this->model      = app('App\\Models\\GerencialParametroRateio');
         $this->tableName  = $this->model->getTable();
     }
@@ -129,13 +129,11 @@ class GerencialParametroRateioController extends Controller
         $validator = Validator::make($request->all(), $this->model->rules);
         if ($validator->fails()) {
             $validate = $this->utils->validateMessage($validator->errors()->getMessages(), $this->model->rulesMessage);
+
             return response()->json($validate, 500);
         }
 
         $update = GerencialParametroRateio::find($id);
-
-#echo $id;
-#dd($request);
 
         foreach ($this->model->columnList as $column) {
             switch ($column) {

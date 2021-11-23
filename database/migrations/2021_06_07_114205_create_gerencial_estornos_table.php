@@ -21,6 +21,7 @@ class CreateGerencialEstornosTable extends Migration
             $table->unsignedBigInteger('idCentroCusto')->nullable()->comment('Identificador do centro de custo');
             $table->foreign('idCentroCusto')->references('id')->on('gerencialCentroCusto');
             $table->char('estornoAtivo',1)->comment('Identifica se o parâmetro de estorno está ativo S: Sim | N: Não');
+            $table->text('justificativa')->nullable()->comment('Justificativa para o estorno');
             $table->timestamps();
         });
     }

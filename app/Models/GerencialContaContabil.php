@@ -28,7 +28,7 @@ class GerencialContaContabil extends Model
                                 //'contaContabil'             => 'Número da Conta Contábil',
                                 'codigoSubContaERP'         => 'Sub-Conta',
                                 'contaContabilAtiva'        => 'Conta Contábil Ativa',
-                                'receitaVeiculo'            => 'Conta de Receita de Veículos',
+                                'receitaVeiculo'            => 'Conta de Receita de Veículos (VN)',
                                 'idCentroCusto'             => 'Centro de Custo Associado'];
 
     public $columnValue     = ['contaContabilAtiva' => ['S' => 'Sim', 'N' => 'Não'],
@@ -181,5 +181,22 @@ class GerencialContaContabil extends Model
 
         if (isset($contaERP[0]))    return $contaERP[0];
         else                        return FALSE;
+    }
+
+
+    /**
+     *  validateUnique
+     *  Retorna a existência ou não de registro de associação de conta contábil x conta gerencial
+     *  evitando a duplicidade de registros
+     * 
+     *  @param      integer     idContaGerencial
+     *  @param      integer     codigoContaContabil
+     * 
+     *  @return     boolean     (TRUE = Found | FALSE = Not Found)
+     */
+    public function validateUnique($idContaGerencial, $codigoContaContabil) {
+        return GerencialContaContabil::where('idContaGerencial', $idContaGerencial)
+                                     ->where('codigoContaContabilERP', $codigoContaContabil)
+                                     ->get();
     }
 }

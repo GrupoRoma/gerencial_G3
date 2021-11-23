@@ -64,12 +64,12 @@
         $formAction = $routeName.'.update';
         $method     = 'PUT';
     };
-
 @endphp
 
 {{--@if (isset($errors) && count($errors) > 0) {{dd($errors)}} @endif --}}
 
 <form id="gerencial-form" action="{{route($formAction, $id)}}" method="{{$method}}" data-redir="{{route($routeName.'.index')}}">
+<input type="hidden" name="_method" value="{{$method}}">
 
 {{-- Carrega o layout para os formulário de CRUD --}}
 @extends('layouts.crud')
@@ -85,6 +85,9 @@
     <div class="data-form-default">
         {{-- Token --}}
         @csrf
+        <div class="container text-center text-orange">
+            <span class="fas fa-square"></span> obrigatório
+        </div>
 
         {{-- Percorre a lista de colunas para exibição definidas na model --}}
         @foreach ($model->columnList as $column)
@@ -96,7 +99,7 @@
             @endphp
 
             {{-- Grupo de formulário com o label e o campo (input, select, textarea, ...) --}}
-            <div class="form-group row">
+            <div class="form-group row {{$columnMeta[$column]->nullable ? '' : 'form-required'}}">
                 {{-- Label para a coluna. Utiliza a definição de columnAlias[] da model --}}
                 <label for="{{$column}}" class="col-xs-12 col-sm-3 xol-md-4 col-form-label text-right">
                     {{$model->columnAlias[$column]}}

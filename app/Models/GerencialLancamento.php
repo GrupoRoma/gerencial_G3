@@ -11,65 +11,39 @@ class GerencialLancamento extends Model
 {
     use HasFactory;
 
-    protected $table        = 'gerencialLancamentos';
-    protected $guarded      = ['id', 'idUsuario', 'idTipoLancamento', 'idLancamentoOrigem', 'numeroLote'];
-    protected $getColumns   = [];
-    protected $historicoGravaLancamento;
+    protected   $table        = 'gerencialLancamentos';
+    protected   $guarded      = ['id', 'idUsuario', 'idTipoLancamento', 'idLancamentoOrigem'];
+    protected   $getColumns   = [];
+    protected   $historicoGravaLancamento;
+    protected   $reportCentrosCusto;
 
+    public   $comparativoCentroCusto= FALSE;
+    
     public $viewTitle       = 'Lançamentos Gerenciais';
     public $viewSubTitle;
-    
-    public $columnList      = ['anoLancamento', 
-                                'mesLancamento', 
-                                'codigoContaContabil', 
-                                'idEmpresa', 
-                                'centroCusto', 
-                                'idContaGerencial',
-                                'creditoDebito',
-                                'valorLancamento',
-                                'historicoLancamento',
-                                'numeroDocumento'];
-
-    public $columnAlias     = ['anoLancamento'          => 'Ano de Referência',
-                                'mesLancamento'         => 'Mês de Referência',
-                                'codigoContaContabil'   => 'Conta Contábil',
-                                'idEmpresa'             => 'Empresa',
-                                'centroCusto'           => 'Centro de Custo',
-                                'idContaGerencial'      => 'Conta Gerencial',
-                                'creditoDebito'         => 'Crédito / Débito',
-                                'valorLancamento'       => 'Valor',
-                                'historicoLancamento'   => 'Histórico',
-                                'numeroDocumento'       => 'Número do Documento'];
-
-    public $columnValue     = ['mesLancamento'        => ['1'  => 'Janeiro', 
-                                                          '2'  => 'Fevereiro', 
-                                                          '3'  => 'Março', 
-                                                          '4'  => 'Abril', 
-                                                          '5'  => 'Maio', 
-                                                          '6'  => 'Junho',
-                                                          '7'  => 'Julho',
-                                                          '8'  => 'Agosto',
-                                                          '9'  => 'Setembro',
-                                                          '10' => 'Outubro',
-                                                          '11' => 'Novembro',
-                                                          '12' => 'Dezembro'],
+   
+    public $columnList      = [ 'anoLancamento', 'mesLancamento', 'codigoContaContabil', 'idEmpresa', 'centroCusto', 'idContaGerencial',
+                                'creditoDebito', 'valorLancamento', 'historicoLancamento'];
+    public $columnsGrid     = [ 'anoLancamento', 'mesLancamento', 'codigoContaContabil', 'idEmpresa', 'centroCusto', 'idContaGerencial',
+                                'creditoDebito', 'valorLancamento', 'historicoLancamento', 'numeroLote'];
+    public $columnAlias     = ['anoLancamento'          => 'Ano de Referência', 'mesLancamento'         => 'Mês de Referência',
+                                'codigoContaContabil'   => 'Conta Contábil',    'idEmpresa'             => 'Empresa',
+                                'centroCusto'           => 'Centro de Custo',   'idContaGerencial'      => 'Conta Gerencial',
+                                'creditoDebito'         => 'Crédito / Débito',  'valorLancamento'       => 'Valor',
+                                'historicoLancamento'   => 'Histórico',         'numeroLote'            => 'Número do Lote'];
+    public $columnValue     = ['mesLancamento'        => ['1'  => 'Janeiro', '2'  => 'Fevereiro', '3'  => 'Março', 
+                                                          '4'  => 'Abril', '5'  => 'Maio', '6'  => 'Junho',
+                                                          '7'  => 'Julho', '8'  => 'Agosto', '9'  => 'Setembro',
+                                                          '10' => 'Outubro', '11' => 'Novembro', '12' => 'Dezembro'],
                                'creditoDebito'        => ['CRD' => 'Crédito', 'DEB' => 'Débito']];
-
     public $customType      = ['creditoDebito'        => ['type'      => 'radio',
                                                           'values'    => ['CRD' => 'Crédito', 'DEB' => 'Débito']]
                               ];
-
-    public $rules           = ['anoLancamento'          => 'required',
-                                'mesLancamento'         => 'required|min:1|max:12', 
-                                'codigoContaContabil'   => 'nullable', 
-                                'idEmpresa'             => 'required', 
-                                'centroCusto'           => 'required', 
-                                'idContaGerencial'      => 'required',
-                                'creditoDebito'         => 'required',
-                                'valorLancamento'       => 'required',
-                                'historicoLancamento'   => 'nullable',
-                                'numeroDocumetno'       => 'nullable'];
-
+    public $rules           = ['anoLancamento'          => 'required', 'mesLancamento'         => 'required|min:1|max:12', 
+                                'codigoContaContabil'   => 'nullable', 'idEmpresa'             => 'required', 
+                                'centroCusto'           => 'required', 'idContaGerencial'      => 'required',
+                                'creditoDebito'         => 'required', 'valorLancamento'       => 'required',
+                                'historicoLancamento'   => 'nullable', 'numeroLote'            => 'nullable'];
     public $rulesMessage    = [ 'anoLancamento'         => 'ANO DE REFERÊNCIA: Obrigatório',
                                 'mesLancamento'         => 'MÊS DE REFERÊNCIA: Obrigatório',
                                 'idEmpresa'             => 'EMPRESA: Obrigatório',
@@ -78,7 +52,6 @@ class GerencialLancamento extends Model
                                 'creditoDebito'         => 'CRÉDITO / DÉBTIO: Obrigatório',
                                 'valorLancamento'       => 'VALOR: Obrigatório'
                               ];   
-
     public $errors          = [];
     
     /**
@@ -179,6 +152,17 @@ class GerencialLancamento extends Model
         $formValues = [];
         foreach($fkData as $row => $data) {
             $formValues[] = [$data->{$columnValueName}, $data->codigoContaGerencial.'.'.$data->descricaoContaGerencial];
+        }
+
+        return ['options' => $formValues, 'type' => '']; 
+    }
+
+    public function fk_gerencialTipoLancamento($columnValueName = 'id') {
+        $fkData = GerencialTipoLancamento::orderBy('descricaoTipoLancamento')->get();
+
+        $formValues = [];
+        foreach($fkData as $row => $data) {
+            $formValues[] = [$data->{$columnValueName}, $data->descricaoTipoLancamento];
         }
 
         return ['options' => $formValues, 'type' => '']; 
@@ -303,7 +287,7 @@ class GerencialLancamento extends Model
                                             mesAnoLancamento		= CONVERT(VARCHAR, G3_gerencialLancamentos.mesLancamento)+'/'+CONVERT(VARCHAR,G3_gerencialLancamentos.anoLancamento),
                                             numeroContaGerencial	= G3_gerencialContaGerencial.codigoContaGerencial,
                                             contaGerencial			= G3_gerencialContaGerencial.descricaoContaGerencial,
-                                            contaContabil			= G3_gerencialLancamentos.codigoContaContabil,
+                                            --contaContabil			= G3_gerencialLancamentos.codigoContaContabil,
                                             nomeEmpresa				= G3_gerencialEmpresas.nomeAlternativo,
                                             nomeRegional			= G3_gerencialRegional.descricaoRegional,
                                             codigoGrupoConta		= G3_gerencialGrupoConta.codigoGrupoConta,
@@ -341,7 +325,7 @@ class GerencialLancamento extends Model
                                     $filter
                                     
                                     GROUP BY G3_gerencialLancamentos.anoLancamento, G3_gerencialLancamentos.mesLancamento, G3_gerencialContaGerencial.codigoContaGerencial, G3_gerencialContaGerencial.descricaoContaGerencial,
-                                             G3_gerencialLancamentos.codigoContaContabil, G3_gerencialEmpresas.nomeAlternativo, G3_gerencialRegional.descricaoRegional, G3_gerencialGrupoConta.ordemExibicao, 
+                                             /*G3_gerencialLancamentos.codigoContaContabil,*/ G3_gerencialEmpresas.nomeAlternativo, G3_gerencialRegional.descricaoRegional, G3_gerencialGrupoConta.ordemExibicao, 
                                              G3_gerencialGrupoConta.codigoGrupoConta, G3_gerencialGrupoConta.descricaoGrupoConta, G3_gerencialSubGrupoConta.descricaoSubGrupoConta, G3_gerencialLancamentos.centroCusto,
                                              G3_gerencialCentroCusto.siglaCentroCusto, G3_gerencialCentroCusto.descricaoCentroCusto, 
                                              
@@ -350,7 +334,7 @@ class GerencialLancamento extends Model
                                              G3_gerencialContaGerencial.id, G3_gerencialContaContabil.codigoContaContabilERP,
                                              G3_gerencialLancamentos.idEmpresa, G3_gerencialEmpresas.codigoEmpresaERP
                                     
-                                    ORDER BY nomeRegional, nomeEmpresa, G3_gerencialGrupoConta.ordemExibicao, codigoGrupoConta, subGrupoConta, codigoContaGerencial, centroCusto");
+                                    ORDER BY nomeRegional, nomeEmpresa, G3_gerencialGrupoConta.ordemExibicao, anoLancamento, mesLancamento, codigoGrupoConta, subGrupoConta, codigoContaGerencial, centroCusto");
         return $lancamentos;
 
     }   //-- getLancamentos --//
@@ -531,7 +515,7 @@ class GerencialLancamento extends Model
                                 ".$dadosRegistro->valorLancamento.",
                                 '".$this->historicoGravaLancamento."',
                                 ".$dadosRegistro->idTipoLancamento.",
-                                ".(isset($dadosRegistro->codigoContaContabil) ? $dadosRegistro->codigoContaContabil : "''").",
+                                ".(isset($dadosRegistro->codigoContaContabil) ? $dadosRegistro->codigoContaContabil : "NULL").",
                                 1,  
                                 '".date('Y-m-d H:i:s')."',
                                 '".date('Y-m-d H:i:s')."'".$otherValues.")";
@@ -710,15 +694,6 @@ class GerencialLancamento extends Model
             }
         }
 
-/*        $addColumns     = NULL;
-        $groupColumns   = NULL;
-        if (isset($this->getColumns) && !empty($this->getColumns)) {
-            foreach ($this->getColumns as $labelName => $columnName) {
-                $addColumns     .= $labelName.' = '.$columnName.',';
-                $groupColumns   .= $columnName.',';
-            }
-        }
-*/
         $dbData     = DB::select("  SELECT  nomeEmpresa		        = G3_gerencialEmpresas.nomeAlternativo,
                                             siglaCentroCusto        = G3_gerencialCentroCusto.siglaCentroCusto,
                                             valorMargemBruta        = SUM(CASE WHEN G3_gerencialSubGrupoConta.baseMargemBruta = 'S'			THEN G3_gerencialLancamentos.valorLancamento ELSE 0 END),
@@ -741,6 +716,106 @@ class GerencialLancamento extends Model
                                     
                                     GROUP BY G3_gerencialEmpresas.nomeAlternativo, G3_gerencialCentroCusto.siglaCentroCusto");
         return $dbData;
-
     }   //-- getMargemBruta --//
+
+    /**
+     *  setComparativoCCusto
+     *  Define que os dados são para o comparativo de centro de custo
+     * 
+     *  @param  array     CentrosCusto
+     * 
+     */
+    public function setComparativoCCusto(array $centrosCusto = NULL) {
+        $this->comparativoCentroCusto   = TRUE;
+        $this->reportCentrosCusto       = (!empty($centrosCusto) ? implode(',', $centrosCusto) : '');
+    }
+
+    /**
+     *  getComparativoMensal
+     *  Retorna os lançamentos para o relatório gerencial no comparativo mensal
+     * 
+     *  @param  Mixed     periodoMes
+     *  @param  Mixed     periodoAno
+     *  @param  Array     codigoEmpresa (Object / Array)
+     * 
+     *  @return object      dbDataObject
+     * 
+     */
+    public function getComparativoMensal($periodoMes, $periodoAno, Array $codigoEmpresa) {
+        $colEmpresaCCUsto     = "G3_gerencialEmpresas.nomeAlternativo, ";
+        $colRegionalCCUsto    = "G3_gerencialRegional.descricaoRegional, ";
+        $colGroupCCusto       = "";
+        $whereCCusto          = "";
+        $orderCCusto          = "";
+        
+        if ($this->comparativoCentroCusto) {
+            $colEmpresaCCUsto     = "G3_gerencialEmpresas.nomeAlternativo + ' - ' + G3_gerencialCentroCusto.descricaoCentroCusto, ";
+            $colRegionalCCUsto    = "G3_gerencialRegional.descricaoRegional + ' - ' + G3_gerencialCentroCusto.descricaoCentroCusto, ";
+            $colGroupCCusto       = "G3_gerencialCentroCusto.descricaoCentroCusto, G3_gerencialCentroCusto.ordemExibicao, ";
+            $whereCCusto          = (!empty($this->reportCentrosCusto) ? "G3_gerencialLancamentos.centroCusto IN (".$this->reportCentrosCusto.")" : '');
+            $orderCCusto          = "G3_gerencialCentroCusto.ordemExibicao, ";
+        }
+
+        $dbData = DB::select("SELECT 	nomeEmpresa				= ".$colEmpresaCCUsto."
+                                        nomeRegional            = ".$colRegionalCCUsto."
+                                        mesAno					= CASE WHEN G3_gerencialLancamentos.mesLancamento	= 1 THEN 'JAN/'
+                                                                       WHEN G3_gerencialLancamentos.mesLancamento	= 2 THEN 'FEV/'
+                                                                       WHEN G3_gerencialLancamentos.mesLancamento	= 3 THEN 'MAR/'
+                                                                       WHEN G3_gerencialLancamentos.mesLancamento	= 4 THEN 'ABR/'
+                                                                       WHEN G3_gerencialLancamentos.mesLancamento	= 5 THEN 'MAI/'
+                                                                       WHEN G3_gerencialLancamentos.mesLancamento	= 6 THEN 'JUN/'
+                                                                       WHEN G3_gerencialLancamentos.mesLancamento	= 7 THEN 'JUL/'
+                                                                       WHEN G3_gerencialLancamentos.mesLancamento	= 8 THEN 'AGO/'
+                                                                       WHEN G3_gerencialLancamentos.mesLancamento	= 9 THEN 'SET/'
+                                                                       WHEN G3_gerencialLancamentos.mesLancamento	= 10 THEN 'OUT/'
+                                                                       WHEN G3_gerencialLancamentos.mesLancamento	= 11 THEN 'NOV/'
+                                                                       WHEN G3_gerencialLancamentos.mesLancamento	= 12 THEN 'DEZ/'
+                                                                  END + CONVERT(VARCHAR, anoLancamento),
+                                        subGrupoConta			= G3_gerencialSubGrupoConta.descricaoSubGrupoConta,
+		                                grupoConta				= G3_gerencialGrupoConta.descricaoGrupoConta,
+                                        numeroContaGerencial	= G3_gerencialContaGerencial.codigoContaGerencial,
+		                                contaGerencial			= G3_gerencialContaGerencial.descricaoContaGerencial,
+                                        saldoLancamento			= SUM(G3_gerencialLancamentos.valorLancamento),
+                                        totalReceita			= SUM(CASE WHEN G3_gerencialGrupoConta.receitaCustoMercadoria = 'REC' THEN G3_gerencialLancamentos.valorLancamento ELSE 0 END),
+
+                                        /* hiden values */
+                                        mes						= G3_gerencialLancamentos.mesLancamento,
+                                        ano						= G3_gerencialLancamentos.anoLancamento,
+                                        codigoContaGerencial	= G3_gerencialContaGerencial.codigoContaGerencial
+                                FROM	GAMA..G3_gerencialLancamentos			(nolock)
+                                JOIN	GAMA..G3_gerencialEmpresas				(nolock) ON G3_gerencialEmpresas.id								= G3_gerencialLancamentos.idEmpresa
+                                JOIN	GAMA..G3_gerencialRegional				(nolock) ON G3_gerencialRegional.id								= G3_gerencialEmpresas.codigoRegional
+                                JOIN	GAMA..G3_gerencialCentroCusto			(nolock) ON G3_gerencialCentroCusto.id							= G3_gerencialLancamentos.centroCusto
+                                JOIN	GAMA..G3_gerencialContaGerencial		(nolock) ON G3_gerencialContaGerencial.id						= G3_gerencialLancamentos.idContaGerencial
+                                JOIN	GAMA..G3_gerencialGrupoConta			(nolock) ON G3_gerencialGrupoConta.id							= G3_gerencialContaGerencial.idGrupoConta
+                                JOIN	GAMA..G3_gerencialSubGrupoConta			(nolock) ON G3_gerencialSubGrupoConta.id						= G3_gerencialGrupoConta.idSubGrupoConta
+
+                                WHERE	G3_gerencialLancamentos.mesLancamento	<= ?
+                                AND		G3_gerencialLancamentos.anoLancamento	= ?
+                                AND     G3_gerencialEmpresas.id                IN (".implode(',',$codigoEmpresa).")
+                                ".$whereCCusto."
+
+                                GROUP BY	G3_gerencialEmpresas.nomeAlternativo, ".$colGroupCCusto."
+                                            G3_gerencialRegional.descricaoRegional,
+                                            G3_gerencialLancamentos.mesLancamento, 
+                                            G3_gerencialLancamentos.anoLancamento, 
+                                            G3_gerencialContaGerencial.codigoContaGerencial, 
+                                            G3_gerencialSubGrupoConta.descricaoSubGrupoConta,
+                                            G3_gerencialGrupoConta.descricaoGrupoConta,
+                                            G3_gerencialContaGerencial.descricaoContaGerencial
+
+                                ORDER BY	".$orderCCusto." nomeEmpresa, ano, mes, numeroContaGerencial, grupoConta, subGrupoConta", [$periodoMes, $periodoAno]);
+        return $dbData;
+    }
+
+    /**
+     *  getLoteLancamento
+     *  retorna o número do próximo lote de lançamentos gerenciais
+     * 
+     *  @return Int
+     * 
+     */
+    public function getLoteLancamento() {
+        return GerencialLancamento::max('numeroLote');
+    }
 }

@@ -23,11 +23,18 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.14.0/css/all.css" integrity="sha384-HzLeBuhoNPvSl5KYnjx0BT+WB0QEEqLprO+NBkkk5gbc67FTaL7XIGa2w1L0Xbgc" crossorigin="anonymous">
 
-    <!-- Styles -->
+    <!-- Styles ---- LOCAL ------ -->
         <!--// APP -->
-    <link href="{{ asset('public/css/app.css') }}" rel="stylesheet">
+    <link href="{{ asset('public/css/gerencial.css') }}" rel="stylesheet">
         <!--// REPORTS -->
     <link href="{{ asset('public/css/reports.css') }}" rel="stylesheet">
+
+    <!-- Styles ----- PRODUÇÃO ----- -- >
+        <!--// APP -- >
+        <link href="{{ asset('css/gerencial.css') }}" rel="stylesheet">
+        <!--// REPORTS -- >
+        <link href="{{ asset('css/reports.css') }}" rel="stylesheet">
+    -->
 </head>
 
 <body>
@@ -77,7 +84,7 @@
                        id="navbarDropdown" role="button" 
                        data-toggle="dropdown" 
                        aria-haspopup="true" aria-expanded="false">
-                      <span class="fa fa-file-alt"></span> Exceções
+                      <span class="fa fa-file-alt"></span> Cadastro Exceções
                     </a>
                     <div class="dropdown-menu sobre" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item" data-nav="{{route('outrasContas.index')}}">[VAL] Outras Contas Contábeis</a>
@@ -90,15 +97,14 @@
                        id="navbarDropdown" role="button" 
                        data-toggle="dropdown" 
                        aria-haspopup="true" aria-expanded="false">
-                      <span class="fa fa-file-alt"></span> Lançamentos
+                      <span class="fa fa-file-alt"></span> Cadastro Parâmetros
                     </a>
                     <div class="dropdown-menu sobre" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" data-nav="{{route('lancamento.index')}}" data-params="idTipoLancamento=6">[VAL] Ajuste Manual</a>
-                        <a class="dropdown-item" data-nav="{{route('lancamento.index')}}" data-params="idTipoLancamento=16">[VAL] Diretoria</a>
-                        <a class="dropdown-item" data-nav="{{route('lancamento.index')}}" data-params="idTipoLancamento=21">[VAL] Importados [CSV]</a>
-                        <a class="dropdown-item" data-nav="{{route('importacsv')}}">[CRN] Importar Arquivo (.csv)</a>
-                        <a class="dropdown-item CRN" data-nav="">[CRN] Justificativas de Variação</a>
-                        <a class="dropdown-item CRN" data-nav="">[CRN] Por Lote</a>
+                        <a class="dropdown-item" data-nav="{{route('estorno.index')}}">[VAL] Estornos</a>
+                        <a class="dropdown-item" data-nav="{{route('parametroRateio.index')}}">[VAL] Parâmetros de Rateio</a>
+                        <a class="dropdown-item" data-nav="{{route('tabelaRateio.index')}}">[VAL] Tabela de Referência</a>
+                        <a class="dropdown-item" data-nav="{{route('transferenciaEmpresa.index')}}">[VAL] Transferência de Empresa</a>
+                        <a class="dropdown-item" data-nav="{{route('transferenciaCentroCusto.index')}}">[VAL] Transferência de C.Custo</a>
                     </div>
                 </li>
 
@@ -107,17 +113,32 @@
                        id="navbarDropdown" role="button" 
                        data-toggle="dropdown" 
                        aria-haspopup="true" aria-expanded="false">
-                      <span class="fa fa-file-alt"></span> Parâmetros
+                      <span class="fa fa-file-alt"></span> Seleção de Períodos (Sessão)
                     </a>
                     <div class="dropdown-menu sobre" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" data-nav="{{route('estorno.index')}}">[VAL] Estornos</a>
-                        <a class="dropdown-item" data-nav="{{route('parametroRateio.index')}}">[VAL] Parâmetros de Rateio</a>
-                        <a class="dropdown-item" data-nav="{{route('tabelaRateio.index')}}">[VAL] Tabela de Rateio</a>
-                        <a class="dropdown-item" data-nav="{{route('transferenciaEmpresa.index')}}">[VAL] Transferência de Empresa</a>
-                        <a class="dropdown-item" data-nav="{{route('transferenciaCentroCusto.index')}}">[VAL] Transferência de C.Custo</a>
+                        <a class="dropdown-item" data-nav="{{route('periodo.index')}}">Períodos</a>
+                      <div class="dropdown-divider"></div>
+                      <a class="dropdown-item CRN" href="#">[CRN] Encerrar Período</a>
                     </div>
                 </li>
-                
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" 
+                       id="navbarDropdown" role="button" 
+                       data-toggle="dropdown" 
+                       aria-haspopup="true" aria-expanded="false">
+                      <span class="fa fa-file-alt"></span> Lançamentos
+                    </a>
+                    <div class="dropdown-menu sobre" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" data-nav="{{route('lancamento.index')}}" data-params="idTipoLancamento=6">[VAL] Ajuste Manual</a>
+                        {{-- <a class="dropdown-item" data-nav="{{route('lancamento.index')}}" data-params="idTipoLancamento=16">[VAL] Diretoria</a> --}}
+                        <a class="dropdown-item" data-nav="{{route('lancamento.index')}}" data-params="idTipoLancamento=21">[VAL] Arquivos Importados [CSV]</a>
+                        <a class="dropdown-item" data-nav="{{route('importacsv')}}">[VAL] Importar Arquivo (.csv)</a>
+                        {{-- <a class="dropdown-item CRN" data-nav="">[CRN] Justificativas de Variação</a>
+                        <a class="dropdown-item CRN" data-nav="">[CRN] Por Lote</a> --}}
+                    </div>
+                </li>
+
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" 
                        id="navbarDropdown" role="button" 
@@ -142,7 +163,7 @@
                     <div class="dropdown-menu sobre" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item" data-nav="{{route('relatorioGerencial')}}">[VAL] GERENCIAL</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item CRN" data-nav="">[CRN] Análise de Variação</a>
+                        {{-- <a class="dropdown-item CRN" data-nav="">[CRN] Análise de Variação</a> --}}
                         <a class="dropdown-item CRN" data-nav="">[CRN] Exportação dos Lançamentos</a>
                         <a class="dropdown-item" data-nav="{{route('relatorioLancamentos')}}">[CRN] Lançamentos Gerenciais</a>
                         <a class="dropdown-item CRN" data-nav="">[CRN] TVI</a>
@@ -157,35 +178,40 @@
                         <a class="dropdown-item [VAL]" data-nav="{{route('gerencialTipoLancamento')}}">[VAL] Cad. Tipos de Lançamento</a>
                         <a class="dropdown-item [VAL]" data-nav="{{route('gerencialOutrasContas')}}">[VAL] Exceções Outras Contas</a>
                         <a class="dropdown-item [VAL]" data-nav="{{route('gerencialContaContabil')}}">[VAL] Conta Gerencial x Conta Contabil</a>
+                        <a class="dropdown-item [VAL]" data-nav="{{route('gerencialParametroRateio')}}">[VAL] Parâmetro de Rateio</a>
                     </div>
                 </li>
 
-                <li class="nav-item dropdown">
+                {{-- <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" 
                        id="navbarDropdown" role="button" 
                        data-toggle="dropdown" 
                        aria-haspopup="true" aria-expanded="false">
-                      <span class="fa fa-file-alt"></span> Sessão
-                    </a>
-                    <div class="dropdown-menu sobre" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" data-nav="{{route('periodo.index')}}">Períodos</a>
-                      <div class="dropdown-divider"></div>
-                      <a class="dropdown-item CRN" href="#">[CRN] Encerrar Período</a>
-                    </div>
-                </li>
-
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" 
-                       id="navbarDropdown" role="button" 
-                       data-toggle="dropdown" 
-                       aria-haspopup="true" aria-expanded="false">
-                      <span class="fa fa-file-alt"></span> Uilitários
+                      <span class="fa fa-file-alt"></span> Utilitários
                     </a>
                     <div class="dropdown-menu sobre" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item IMP" data-nav="{{route('importarParametros')}}">[IMP] Importar Parâmetros de Rateio</a>
 
                     </div>
-                </li>
+                </li> --}}
+            </div>
+
+            <div class="pull-right">
+                <h3 class="tw-8">
+                    <span class="periodo-text">{{$periodoAtivo->periodoMes}}/{{$periodoAtivo->periodoAno}}</span>
+                    <small class="ts-5">(
+                        @switch($periodoAtivo->periodoSituacao)
+                            @case('FC')
+                                PB
+                                @break
+                            @case('LC')
+                                LG
+                                @break
+                            @default
+                            {{$periodoAtivo->periodoSituacao}}
+                        @endswitch
+                        )</small>
+                </h3>
             </div>
           </nav>
 
@@ -254,8 +280,12 @@
             $('[data-nav]').unbind( "click" ).on('click', function(event) {
                 event.preventDefault();
 
+                // LOCAL - DESENVOLVIMENTO
                 if ($(this).data('nav').indexOf('public') > 0)  url = $(this).data('nav');
                 else                                            url = $(this).data('nav').replace('gerencial', 'gerencial/public');
+
+                // PRODUÇÃO
+                // url = $(this).data('nav');
 
                 urlParams   = '{}';
                 urlMethod   = 'GET';
@@ -291,8 +321,13 @@
 
                 var redir = false;
                 if ($(this).data('redir') !== undefined) {
+                    // LOCAL - DESENVOLVIMENTO
                     if ($(this).data('redir').indexOf('public') > 0)  urlRedir = $(this).data('redir');
                     else                                              urlRedir = $(this).data('redir').replace('gerencial', 'gerencial/public');
+
+                    // PRODUÇÃO
+                    // urlRedir = $(this).data('redir');
+
                     if (urlRedir.lastIndexOf('.') > 25) urlRedir = urlRedir.substr(0, urlRedir.lastIndexOf('.'));
 
                     redir   = true;
@@ -302,7 +337,7 @@
                 $.ajax({
                     data        : new FormData(this),   // formData,
                     url         : $(this).attr('action'),
-                    method      : $(this).attr('method'),
+                    method      : 'POST',       //$(this).attr('method'),
                     contentType : false,
                     processData : false,
                     beforeSend: function() {
@@ -336,6 +371,7 @@
 
                 }).done(function() {
                     $('#loadSpinner').removeClass("d-flex").addClass("d-none");
+                    if ($("#report-selection")) $("#report-selection").collapse('hide');
                 });
 
                 event.stopImmediatePropagation();
@@ -343,8 +379,13 @@
 
             // Confirmação de exclusão de dados de formulário
             $('[data-confirm]').unbind( "click" ).on('click', function() {
+
+                // LOCAL - DESENVOLVIMENTO
                 if ($(this).data('confirm').indexOf('public') > 0)  url = $(this).data('confirm');
                 else                                                url = $(this).data('confirm').replace('gerencial', 'gerencial/public');
+
+                // PRODUÇÃO
+                //url = $(this).data('confirm');
 
                 //url += '/destroy';
                 
@@ -410,7 +451,12 @@
                 // Executa o método para listar o detalhamento da conta
                 $.ajax({
                     data    : 'mes='+rowData.mesLancamento+'&ano='+rowData.anoLancamento+'&codigoEmpresa='+rowData.codigoEmpresa+'&codigoContaGerencial='+rowData.codigoContaGerencial,
+                    // LOCAL - DESENVOLVIMENTO
                     url     : document.location+'public/detalheConta',
+
+                    // PRODUTÇÃO
+                    //url     : document.location+'detalheConta',
+
                     method  : 'POST',
                     beforeSend: function() {
                         $('#loadSpinner').removeClass("d-none").addClass("d-flex");
@@ -444,7 +490,12 @@
 
                 $.ajax({
                     data    : 'value='+value,
+                    // LOCAL - DESENVOLVIMENTO
                     url     : document.location+'public/'+method,
+
+                    // PRODUÇÃO
+                    //url     : document.location+method,
+
                     method  : 'GET',
                     beforeSend: function() {
                         $('#loadSpinner').removeClass("d-none").addClass("d-flex");
@@ -466,8 +517,15 @@
             var wPrint = window.open();
 
             printContent  = '<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">';
+
+            // LOCAL - DESENVOLVIMENTO
             printContent += '<link href="{{ asset('public/css/app.css') }}" rel="stylesheet">';
             printContent += '<link href="{{ asset('public/css/reports.css') }}" rel="stylesheet">';
+
+            // PRODUÇÃO
+            //printContent += '<link href="{{ asset('css/app.css') }}" rel="stylesheet">';
+            //printContent += '<link href="{{ asset('css/reports.css') }}" rel="stylesheet">';
+
             printContent += $(target).html();
 
             wPrint.document.open();

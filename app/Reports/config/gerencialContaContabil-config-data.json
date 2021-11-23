@@ -4,6 +4,9 @@
         "reportConfigFile": "gerencialContaContabil",
         "showToolBar": true,
         "dataDateFormat": "d/m/Y",
+        "selectionData": [
+                              {"columnName": "idContaGerencial", "formType": "foreignKey", "initalValue": "", "label": "Conta Gerencial" }
+                         ],
         "columnsHide": ["id", "created_at", "updated_at", "contaGerencial"],
         "columnsCustomHeader": {"contaGerencial": "Conta Gerencial",
                                 "contaContabil": "ID Conta Contábil",
@@ -60,9 +63,7 @@
                                         "type": "left",
                                         "raw": true}
                                 ],
-                        "filter": [{"columnName": "",
-                                    "operator": "",
-                                    "value": ""}]
+                        "filter": []
                       }
         
 }

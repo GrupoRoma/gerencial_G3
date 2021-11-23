@@ -5,9 +5,8 @@
         "showToolBar": true,
         "dataDateFormat": "d/m/Y",
         "selectionData": [
-                {"columnName": "codigoRegional", "formType": "foreignKey", "initalValue": "", "label": "Regional" }
-         ],
-
+                                {"columnName": "codigoRegional", "formType": "foreignKey", "initalValue": "", "label": "Regional" }
+                         ],
         "columnsHide": ["created_at", "updated_at", "codigoRegional", "nomeRegional", "regional"],
         "columnsCustomHeader": {"id": "Código (gerencial)",
                                 "codigoEmpresaERP": "Código (workflow)",
@@ -61,9 +60,7 @@
                                         "rightColumn": "codigoRegional",
                                         "operator": "="}
                                 ],
-                        "filter": [{"columnName": "",
-                                    "operator": "",
-                                    "value": ""}]
+                        "filter": []
                       }
         
 }

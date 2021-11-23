@@ -65,7 +65,7 @@
         <!-- CORPO DO FILTRO -->
         <div class="card-body bg-light">
             <form id="gerencial-form" method="GET"   action="{{route(Route::currentRouteName())}}">
-                <input type="hidden" name="reportSelection" value="1">
+                <input type="hidden" name="reportSelection" value="true">
                 @csrf
 
                 <div class="row">
@@ -85,6 +85,12 @@
                                                     <input class="form-control ml-2" type="date" name="{{$formField->columnName}}[]" id="periodEnd" placeholder="Data Final" value="{{date('d/m/Y')}}">
                                                 </div>
                                                 @break
+                                            @case("periodoGerencial")
+                                                <div class="form-inline">
+                                                    <input class="form-control" type="text" name="{{$formField->columnName}}[]" id="periodoStart" placeholder="99/9999)" value="{{date('m/Y')}}">
+                                                    <input class="form-control ml-2" type="text" name="{{$formField->columnName}}[]" id="periodoEnd" placeholder="99/9999" value="{{date('m/Y')}}">
+                                                </div>
+                                                @break
                                             @case("date")
                                                 <input class="form-control" type="date" name="{{$formField->columnName}}" id="{{$formField->columnName}}" placeholder="{{$formField->label}}" value="{{date('d/m/Y')}}">
                                                 @break
@@ -92,7 +98,9 @@
                                                 <input class="form-control" type="text" name="{{$formField->columnName}}" id="{{$formField->columnName}}" placeholder="{{$formField->label}}" value="{{date('d/m/Y')}}">
                                                 @break;
                                             @case("foreignKey")
-                                                @if (isset($columnMeta[$formField->columnName]->foreignTable))
+                                                @if (isset($columnMeta[$formField->columnName]->foreignTable) && 
+                                                     !empty($columnMeta[$formField->columnName]->foreignTable))
+
                                                     @php
                                                         $formOptions = $model->{'fk_'.$columnMeta[$formField->columnName]->foreignTable}($columnMeta[$formField->columnName]->fkColumnValue);
                                                     @endphp

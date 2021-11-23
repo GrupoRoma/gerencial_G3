@@ -61,6 +61,10 @@ class ParametroRateioController extends Controller
         return view('processamento.processamentoRateio');
     }
 
+    public function indexLogistica() {
+        return view('processamento.processamentoLogistica');
+    }
+
     /**
      *  Processa os parâmetros de rateio para aplicar a realocação de valores
      *  entre as contas gerenciais e centros de custo de origem e destino
@@ -109,6 +113,8 @@ class ParametroRateioController extends Controller
         // RATEIOS POR PESO | Base de Cálculo
         $rateioPeso     = GerencialParametroRateio::where('parametroAtivo', 'S')
                                                   ->where('formaAplicacao', 'PESO')
+                                                  ->join('gerencialTipoLancamento', 'gerencialTipoLancamento.id', '=', 'gerencialParametroRateio.idTipoLancamento')
+                                                  ->orderBy('gerencialTipoLancamento.ordemProcessamento')
                                                   //->where('id', 134)
                                                   ->get();
 
@@ -344,7 +350,8 @@ class ParametroRateioController extends Controller
                 // Processa os centros de custo para cada empresa
                 foreach ($centroCustoDestino as $codigoCentroCusto) {
                     // Identifica o percentual para o centro de custo
-                    $percentualCCusto   = $this->tabelaPercentuais->getPercentuais($dataRateio->idTabelaRateio, $codigoCentroCusto);
+//                    $percentualCCusto   = $this->tabelaPercentuais->getPercentuais($dataRateio->idTabelaRateio, $codigoCentroCusto);
+                    $percentualCCusto   = $this->tabelaPercentuais->getPercentuais($codigoEmpresa, $dataRateio->idTabelaRateio, $codigoCentroCusto);
 
                     // Calcula o valor do rateio de acordo com percentual do centro de custo
                     $valorRateio        = $valorApropriar * ($percentualCCusto->percentual / 100);
@@ -455,13 +462,15 @@ class ParametroRateioController extends Controller
 
         // Grava os lançamentos gerenciais
         $this->errors   = [];
+        $success        = FALSE;
         if ($this->lancamentoGerencial->gravaLancamento($lancamentoRateio)) {
             $this->errors[] = ['errorTitle' => "RATEIO LOGÍSTICA", 'error' => 'Processamento de Rateio realizado com sucesso!']; 
+            $success        = TRUE;
         }
         else {
             $this->errors[] = ['errorTitle' => "RATEIO LOGÍSTICA", 'error' => 'OCORREU UM ERRO AO PROCESSAR O RATEIO, TENTE NOVAMENTE!']; 
         }
 
-        return view('processamento.validacao', ['errors' => $this->errors]);
+        return view('processamento.validacao', ['errors' => $this->errors, 'success' => $success]);
     }
 }

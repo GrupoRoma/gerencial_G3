@@ -171,7 +171,7 @@ class GerencialParametroRateio extends Model
     public function fk_gerencialBaseCalculo($columnValueName = 'id') {
         $fkData = GerencialBaseCalculo::orderBy('descricaoBaseCalculo')->get();
 
-        $formValues[] = ['', '--- selecione uma base de cálculo ---'];
+        $formValues[] = ['', ''];
         foreach($fkData as $row => $data) {
             $formValues[] = [$data->{$columnValueName}, $data->descricaoBaseCalculo];
         }
@@ -182,7 +182,7 @@ class GerencialParametroRateio extends Model
     public function fk_gerencialContaGerencial($columnValueName = 'id') {
         $fkData = GerencialContaGerencial::orderBy('codigoContaGerencial')->get();
 
-        $formValues[] = ['', '--- selecione uma conta gerencial ---'];
+        $formValues[] = ['', ''];
         foreach($fkData as $row => $data) {
             $formValues[] = [$data->{$columnValueName}, $data->codigoContaGerencial.' - '.$data->descricaoContaGerencial];
         }
@@ -208,7 +208,7 @@ class GerencialParametroRateio extends Model
         $empresas = GerencialEmpresas::where('empresaAtiva', 'S')->orderBy('nomeAlternativo')->get();
 
         $htmlForm = "<select name='codigoEmpresaOrigem".($multi ? '[]\' multiple' : '')." id='codigoEmpresaOrigem' class='form-control'>";
-        if (!$multi) $htmlForm .= "<option>--- selecione uma empresa de origem ---</option>";
+        if (!$multi) $htmlForm .= "<option></option>";
 
         $values = explode(',', $values);
 
@@ -230,7 +230,7 @@ class GerencialParametroRateio extends Model
         $empresas = GerencialEmpresas::where('empresaAtiva', 'S')->orderBy('nomeAlternativo')->get();
 
         $htmlForm = "<select name='codigoEmpresaDestino".($multi ? '[]\' multiple' : '')." id='codigoEmpresaDestino' class='form-control'>";
-        if (!$multi) $htmlForm .= "<option>--- selecione uma empresa de destino ---</option>";
+        if (!$multi) $htmlForm .= "<option></option>";
 
         $values = explode(',', $values);
 
@@ -252,7 +252,7 @@ class GerencialParametroRateio extends Model
         $empresas = GerencialContaGerencial::where('contaGerencialAtiva', 'S')->orderBy('descricaoContaGerencial')->get();
 
         $htmlForm = "<select name='codigoContaGerencialOrigem".($multi ? '[]\' multiple' : '')."' id='codigoContaGerencialOrigem' class='form-control'>";
-        if (!$multi) $htmlForm .= "<option>--- selecione uma conta gerencial de origem ---</option>";
+        if (!$multi) $htmlForm .= "<option></option>";
 
         $values = explode(',', $values);
 
@@ -274,7 +274,7 @@ class GerencialParametroRateio extends Model
         $empresas = GerencialContaGerencial::where('contaGerencialAtiva', 'S')->orderBy('descricaoContaGerencial')->get();
 
         $htmlForm = "<select name='codigoContaGerencialDestino".($multi ? '[]\' multiple' : '')."' id='codigoContaGerencialDestino' class='form-control'>";
-        if (!$multi) $htmlForm .= "<option>--- selecione uma conta gerencial de destino ---</option>";
+        if (!$multi) $htmlForm .= "<option></option>";
 
         $values = explode(',', $values);
 
@@ -296,7 +296,7 @@ class GerencialParametroRateio extends Model
         $empresas = GerencialCentroCusto::where('centroCustoAtivo', 'S')->orderBy('descricaoCentroCusto')->get();
 
         $htmlForm = "<select name='codigoCentroCustoOrigem".($multi ? '[]\' multiple' : '')." id='codigoCentroCustoOrigem' class='form-control'>";
-        if (!$multi) $htmlForm .= "<option>--- selecione um centro de custo de origem ---</option>";
+        if (!$multi) $htmlForm .= "<option></option>";
 
         $values = explode(',', $values);
 
@@ -318,7 +318,7 @@ class GerencialParametroRateio extends Model
         $empresas = GerencialCentroCusto::where('centroCustoAtivo', 'S')->orderBy('descricaoCentroCusto')->get();
 
         $htmlForm = "<select name='codigoCentroCustoDestino".($multi ? '[]\' multiple' : '')." id='codigoCentroCustoDestino' class='form-control'>";
-        if (!$multi) $htmlForm .= "<option>--- selecione um centro de custo de destino ---</option>";
+        if (!$multi) $htmlForm .= "<option></option>";
 
         $values = explode(',', $values);
 
@@ -336,7 +336,7 @@ class GerencialParametroRateio extends Model
     public function fk_gerencialEmpresas($columnValueName = 'id') {
         $fkData = GerencialEmpresas::orderBy('nomeAlternativo')->get();
 
-        $formValues[] = ['', '--- selecione uma empresa ---'];
+        $formValues[] = ['', ''];
         foreach($fkData as $row => $data) {
             $formValues[] = [$data->{$columnValueName}, $data->nomeAlternativo];
         }
@@ -347,7 +347,7 @@ class GerencialParametroRateio extends Model
     public function fk_gerencialCentroCusto($columnValueName = 'id') {
         $fkData = GerencialCentroCusto::orderBy('siglaCentroCusto')->get();
 
-        $formValues[] = ['', '--- selecione um centro de custo ---'];
+        $formValues[] = ['', ''];
         foreach($fkData as $row => $data) {
             $formValues[] = [$data->{$columnValueName}, $data->siglaCentroCusto.' - '.$data->descricaoCentroCusto];
         }
@@ -358,7 +358,7 @@ class GerencialParametroRateio extends Model
     public function fk_gerencialTipoLancamento($columnValueName = 'id') {
         $fkData = GerencialTipoLancamento::orderBy('descricaoTipoLancamento')->get();
 
-        $formValues[] = ['', '--- selecione um tipo de lançamento ---'];
+        $formValues[] = ['', ''];
         foreach($fkData as $row => $data) {
             $formValues[] = [$data->{$columnValueName}, $data->descricaoTipoLancamento];
         }

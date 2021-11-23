@@ -45,13 +45,12 @@ class GerencialLancamentoController extends Controller
 
         if (isset($request->idTipoLancamento) && !empty($request->idTipoLancamento)) {
             $lancamentoTipo             = $this->tipoLancamento->getTipoLancamento($request->idTipoLancamento);
-
             $this->tableData  = GerencialLancamento::where('idTipoLancamento', $request->idTipoLancamento)
                                                     ->where('anoLancamento', $periodoCorrente->ano)
                                                     ->where('mesLancamento', $periodoCorrente->mes)
-                                                    ->orderByRaw($request->columnOrder)
+                                                    ->orderByRaw($this->orderColumn)
                                                     ->get();
-            
+
             $this->model->viewSubTitle = $lancamentoTipo->descricaoTipoLancamento;
         }
         else {
@@ -256,6 +255,8 @@ class GerencialLancamentoController extends Controller
      */
     public function processaCSV(String $csvFile) {
 
+        $numeroLote     = ($this->lancamentoGerencial->getLoteLancamento() ?? 1);
+
         $csvHandle      = fopen(storage_path('app/public/log_importacao/').$csvFile, 'r');
         $lancamentos    = [];
 
@@ -313,7 +314,8 @@ class GerencialLancamentoController extends Controller
                                                 'creditoDebito'         => $creditoDebito,
                                                 'valorLancamento'       => ($creditoDebito == 'DEB' ? $valorLancamento * -1 : $valorLancamento),
                                                 'idTipoLancamento'      => ($rowData[7] == 'S' ? 10 : 21),       // [V] Reversão ou [CSV] Importado CSV
-                                                'historicoLancamento'   => $historico->historicoTipoLancamento.' ['.$csvFile.']'.' - '.utf8_encode($rowData[6])];
+                                                'historicoLancamento'   => $historico->historicoTipoLancamento.' ['.$csvFile.']'.' - '.utf8_encode($rowData[6]),
+                                                'numeroLote'            => $numeroLote];
                    }
                 }
             }

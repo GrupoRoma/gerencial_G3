@@ -9,6 +9,6 @@
             </ul>
         </div>
         <div class="card-footer text-danger text-center">
-            <button class="btn btn-orange" data-nav="{{route('processarParametros')}}">CONFIRMAR PRECESSAMENTO</button>
+            <button class="btn btn-orange" data-nav="{{route('processarParametros')}}">CONFIRMAR PROCESSAMENTO</button>
         </div>
     </div>

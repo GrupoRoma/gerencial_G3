@@ -134,8 +134,8 @@ class ReportCustomData extends Model
             $rawJoin    = '';
             foreach ($customData->join as $count => $join) {
                 $rawJoin   .= ($join->type ?? '')." JOIN ";
-                $rawJoin   .= $join->leftTable."\t\t(nolock) ON ";
-                $rawJoin   .= $join->leftTable.'.'.$join->leftColumn.' ';
+                $rawJoin   .= $join->leftTable." ".($join->alias ?? '')."\t\t(nolock) ON ";
+                $rawJoin   .= ($join->alias ?? $join->leftTable).'.'.$join->leftColumn.' ';
                 $rawJoin   .= ($join->operator ?? ' = ');
                 $rawJoin   .= ($join->rightTable ?? $primaryTable).'.'.$join->rightColumn;
                 $rawJoin   .= "\n";
@@ -144,18 +144,19 @@ class ReportCustomData extends Model
 
         // WHERE
         if (isset($customData->filter)) {
-            $whereRaw = " 1 = 1 ";
+            $whereRaw = " 1 = 1\n ";
             foreach ($customData->filter as $count => $where) {
-                if (!isset($where->columnName) && !empty($where->columnName)) {
-                    $whereRaw   .= "AND\t".$where->columnName;
-                    $whereRaw   .= " ".($where->operator ?? '=');
-                    $whereRaw   .= " ".$where->value;
+                if (isset($where['columnName']) && !empty($where['columnName'])) {
+                    $whereRaw   .= "AND\t".$where['columnName'];
+                    $whereRaw   .= " ".($where['operator'] ?? '=');
+                    $whereRaw   .= " ".$where['value'];
                 }
             }
         }
         
 
         $SQLquery = "SELECT ".$select."\nFROM ".$from."\n".$rawJoin."\nWHERE ".$whereRaw."\n".$order."\n".$group;
+
         // Retorna os dados da consulta
         return DB::select($SQLquery);
     }

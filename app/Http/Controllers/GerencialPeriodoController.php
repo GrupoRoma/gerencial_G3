@@ -69,6 +69,16 @@ class GerencialPeriodoController extends Controller
             return response()->json($validate, 500);
         }
 
+        // Verifica se existe mais de um período aberto
+        if ($request->periodoSituacao == 'AB') {
+            $gerencialPeriodo->setCheckSituacao('AB');
+            $periodoAberto = $gerencialPeriodo->checkPeriodo();
+
+            if ($periodoAberto && count($periodoAberto) > 0) {
+                return response()->json(['Já existe um período [AB] - Em Andamento ('.$periodoAberto[0]['MESANO'].')'], 500);
+            }
+        }
+
         foreach ($this->model->columnList as $column) {
             $gerencialPeriodo->$column = $request->$column;
         }
@@ -121,6 +131,16 @@ class GerencialPeriodoController extends Controller
         if ($validator->fails()) {
             $validate = $this->utils->validateMessage($validator->errors()->getMessages(), $this->model->rulesMessage);
             return response()->json($validate, 500);
+        }
+
+        // Verifica se existe mais de um período aberto
+        if ($request->periodoSituacao == 'AB') {
+            $gerencialPeriodo->setCheckSituacao('AB');
+            $periodoAberto = $gerencialPeriodo->checkPeriodo();
+
+            if ($periodoAberto && count($periodoAberto) > 0) {
+                return response()->json(['Já existe um período [AB] - Em Andamento ('.$periodoAberto[0]['MESANO'].')'], 500);
+            }
         }
 
         $update = GerencialPeriodo::find($id);

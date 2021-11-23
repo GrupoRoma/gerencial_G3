@@ -39,6 +39,33 @@
              "group": "true",
              "global": "true"},
   "callbackRow": "callback-function",
-  "callbackColumn": {"columnName": "columnName", "callback": "callback-function"}
+  "callbackColumn": {"columnName": "columnName", "callback": "callback-function"},
+  "customQuery": true,
+  "columnDataBaseValue":  [{  
+                                "columnName": "column name",
+                                "tableFrom": "table name origin",
+                                "columnValue": "columns name of value from",
+                                "conditionRaw": [],
+                                "conditionCol": "column name for condition",
+                                "multipleValue": true
+                            }
+
+                          ],
+  "customData": { "table": "tableName",
+                  "order": "order columns list (raw)",
+                  "columns": [ "column list (string raw)"],
+                  "join":   [{"leftTable": "tablename", 
+                                  "leftColumn": "left column name",
+                                  "rightColumn": "right column name",
+                                  "operator": "="},
+                              {"leftTable": "database name..table name", 
+                                  "leftColumn": "left column name",
+                                  "rightColumn": "right column name",
+                                  "operator": "operator (= <> < > ...)",
+                                  "raw": true | false,
+                                  "type": "INNER (default), LEFT, RIGHT, ... "},
+                          ],
+                  "filter": [{"columnName": "column name", "operator" : "operator (= <> < > ...)", "value": "filter value"}]
+                }
   
 }

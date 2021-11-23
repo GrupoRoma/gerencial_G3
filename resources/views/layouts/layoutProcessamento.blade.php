@@ -60,19 +60,19 @@
                         <h4>PROCESSAR:</h4>
                         <div class="custom-control custom-checkbox custom-control-inline">
                                 <input type="checkbox" name="importarLancamentos" id="importarLancamentos" value='1' class="custom-control-input" checked> 
-                                <label for="importarLancamentos" class="custom-control-label">Lançamentos</label>
+                                <label for="importarLancamentos" class="custom-control-label">Lançamentos Contábeis</label>
                         </div>
                         <div class="custom-control custom-checkbox custom-control-inline">
                                 <input type="checkbox" name="outrasContas" id="outrasContas" value='1' class="custom-control-input"> 
-                                <label for="outrasContas" class="custom-control-label">[EXCEÇÕES] - Outras Contas</label>
+                                <label for="outrasContas" class="custom-control-label">[EXCEÇÕES] - Outras Contas Contábeis</label>
                         </div>
                         <div class="custom-control custom-checkbox custom-control-inline">
                                 <input type="checkbox" name="amortizacao" id="amortizacao" value='1' class="custom-control-input"> 
-                                <label for="amortizacao" class="custom-control-label">Amortizações</label>
+                                <label for="amortizacao" class="custom-control-label">[EXCEÇÕES] - Amortizações</label>
                         </div>
                         <div class="custom-control custom-checkbox custom-control-inline">
                                 <input type="checkbox" name="estorno" id="estorno" value='1' class="custom-control-input"> 
-                                <label for="estorno" class="custom-control-label">Estornos</label>
+                                <label for="estorno" class="custom-control-label">Parâmetro Estorno</label>
                         </div>
 <!--                        <div class="custom-control custom-checkbox custom-control-inline">
                                 <input type="checkbox" name="consolidado" id="consolidado" value='1' class="custom-control-input"> 

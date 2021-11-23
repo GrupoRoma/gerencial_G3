@@ -34,5 +34,5 @@ JOIN GAMA..G3_gerencialContaGerencial ContaPARA		(nolock) ON ContaPARA.codigoCon
 --JOIN GAMA..G3_gerencialCentroCusto	  CCustoDE		(nolock) ON CCustoDE.codigoCentroCustoERP	IN (SGA_PAR_GRUPO.COD_CCUSTO_DE)
 --JOIN GAMA..G3_gerencialCentroCusto	  CCustoPARA	(nolock) ON CCustoPARA.codigoCentroCustoERP	IN (SGA_PAR_GRUPO.COD_CCUSTO_PARA)
 
-WHERE SGA_PAR_GRUPO.MES_ANO = '01/2021'
+WHERE SGA_PAR_GRUPO.MES_ANO = '08/2021'
 

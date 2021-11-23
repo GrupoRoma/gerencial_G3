@@ -14,18 +14,22 @@ class GerencialEstorno extends Model
     protected   $guarded    = ['id'];
 
     public $viewTitle       = 'Estornos';
-    public $columnList      = ['idContaGerencial', 'codigoContaContabil', 'idCentroCusto', 'estornoAtivo'];
+
+    public $columnsGrid     = ['idContaGerencial', 'codigoContaContabil', 'idCentroCusto', 'estornoAtivo'];
+    public $columnList      = ['idContaGerencial', 'codigoContaContabil', 'idCentroCusto', 'estornoAtivo', 'justificativa'];
     public $columnAlias     = ['idContaGerencial'           => 'Conta Gerencial',
                                 'codigoContaContabil'       => 'Conta Contábil',
                                 'idCentroCusto'             => 'Centro de Custo',
-                                'estornoAtivo'              => 'Ativo'];
+                                'estornoAtivo'              => 'Ativo',
+                                'justificativa'             => 'Justificativa'];
     public $columnValue     = ['estornoAtivo'               => ['S' => 'Sim', 'N' => 'Não']];
     public $customType      = ['estornoAtivo'               => ['type'      => 'radio', 'values'    => ['S' => 'Sim', 'N' => 'Não']]];
 
     public $rules  = ['idContaGerencial'        => 'required_without_all:codigoContaContabil,idCentroCusto',
                       'codigoContaContabil'     => 'required_without_all:idContaGerencial,idCentroCusto',
                       'idCentroCusto'           => 'required_without_all:idContaGerencial,codigoContaContabil',
-                      'estornoAtivo'            => 'required'];
+                      'estornoAtivo'            => 'required',
+                      'justificativa'           => 'nullable'];
 
     public $rulesMessage    = [ 'idContaGerencial'      => 'Informe: CONTA GERENCIAL <b>OU</b> CONTA CONTÁBIL <b>OU</b> CENTRO DE CUSTO',
                                 'codigoContaContabil'   => 'Informe: CONTA GERENCIAL <b>OU</b> CONTA CONTÁBIL <b>OU</b> CENTRO DE CUSTO',

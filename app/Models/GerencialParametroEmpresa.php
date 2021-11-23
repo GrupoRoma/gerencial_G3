@@ -14,7 +14,7 @@ class GerencialParametroEmpresa extends Model
     protected   $guarded        = ['id'];
     public      $viewTitle      = 'Transferência entre Empresas';
     public      $columnList     = ['idEmpresaOrigem',  'idEmpresaDestino', 'parametroAtivo'];
-    public      $columnAlias    = ['idEmpresaOrigem'    => 'Emrpesa de Origem',
+    public      $columnAlias    = ['idEmpresaOrigem'    => 'Empresa de Origem',
                                     'idEmpresaDestino'  => 'Empresa de Destino',
                                     'parametroAtivo'        => 'Parâmetro Ativo'];
 

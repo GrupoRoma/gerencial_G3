@@ -12,6 +12,8 @@ use App\Models\GerencialCentroCusto;
 use App\Models\GerencialRegional;
 use App\Models\GerencialContaGerencial;
 
+use Illuminate\Support\Facades\DB;
+
 class RelatorioGerencialController extends Controller
 {
     //
@@ -33,17 +35,26 @@ class RelatorioGerencialController extends Controller
     protected   $receitaTotalHorizontal;
     protected   $receitaTotalVertical;
 
+    protected   $variacaoHorizontal;
+    protected   $variacaoVertical;
 
     protected   $filterValidateErrors;
 
+    protected   $reportData;
     protected   $reportConditions;
     protected   $reportLayout;
+    protected   $reportLayoutView;
     protected   $reportConfig;
     protected   $reportConfigData;
+    protected   $reportPeriodoMes;
+    protected   $reportPeriodoAno;
+    protected   $reportCSVData;
 
     protected   $preparedData;
     protected   $hrTotals;
     
+
+
     // considerar Lançamentos Extras, Valores Acumulados, Exibir Casas Decimais ou Consolidado
     protected   $configReport;
 
@@ -77,9 +88,10 @@ class RelatorioGerencialController extends Controller
 
     public function index() {
 
-        return view('relatorios.gerencial.filtroGerencial', ['empresas' => $this->listaEmpresas, 
-                                                             'regionais' => $this->listaRegionais, 
-                                                             'centroCusto' => $this->listaCentroCusto]);
+        return view('relatorios.gerencial.filtroGerencial', ['listaEmpresas'    => $this->listaEmpresas, 
+                                                             'listaRegionais'   => $this->listaRegionais, 
+                                                             'listaCentroCusto' => $this->listaCentroCusto,
+                                                             'showHide'         => '']);
     }
 
     /**
@@ -110,51 +122,81 @@ class RelatorioGerencialController extends Controller
         // Calcula os percentuais de Margem Bruta
         $this->calculaMargemBruta($request->all());
         
-        //--- ANÁLISE VERTICAL
-        // Prepara as condições para seleção dos dados
-        $this->prepareConditions($request->all());
+        switch ($this->reportLayout) {
+            /**
+             *   LAYOUTS:  1. POR EMPRESA | 2. POR REGIONAL 
+             */
+            case 'layoutEmpresa':
+                $this->reportLayoutView = $this->reportLayout;
+            case 'layoutRegional':
+                $this->reportLayoutView = 'layoutEmpresa';
+
+                //--- ANÁLISE VERTICAL
+                // Prepara as condições para seleção dos dados
+                $this->prepareConditions($request->all());
+                
+                // Carrega os dados para o relatório
+                $this->reportConditions[]   = ['column' => 'G3_gerencialCentroCusto.analiseVertical', 'value'   => 'S'];
+
+                // Identifica os Centros de Custo para a Análise Vertical
+                $this->centroCustoReport = GerencialCentroCusto::where('centroCustoAtivo', 'S')
+                                                                ->where('analiseVertical', 'S')
+                                                                ->orderBy('ordemExibicao')
+                                                                ->orderBy('descricaoCentroCusto')
+                                                                ->get();
+
+                // Carrega os lançamentos para emissão do relatório
+                $verticalData = $this->lancamentos->getLancamentos(json_encode($this->reportConditions));
+
+                // Prepara os dados para exibição no relatório
+                $this->prepareVerticalData($verticalData);
         
-        // Carrega os dados para o relatório
-        $this->reportConditions[]   = ['column' => 'G3_gerencialCentroCusto.analiseVertical', 'value'   => 'S'];
-
-        // Identifica os Centros de Custo para a Análise Vertical
-        $this->centroCustoReport = GerencialCentroCusto::where('centroCustoAtivo', 'S')
-                                                        ->where('analiseVertical', 'S')
-                                                        ->orderBy('ordemExibicao')
-                                                        ->orderBy('descricaoCentroCusto')
-                                                        ->get();
-
-        $verticalData = $this->lancamentos->getLancamentos(json_encode($this->reportConditions));
-
-        // Prepara os dados para exibição no relatório
-        $this->prepareVerticalData($verticalData);
-
-        // Gera e exibe o relatório
-        $verticalReport     = $this->generateReport();
-
-        //--- ANÁLISE HORIZONTAL
-        // Prepara as condições para seleção dos dados
-        $this->prepareConditions($request->all());
+                // Gera e exibe o relatório
+                $verticalReport     = $this->generateReport();
         
-        // Carrega os dados para o relatório
-        $this->reportConditions[]   = ['column' => 'G3_gerencialCentroCusto.analiseVertical', 'value'   => 'N'];
+                //--- ANÁLISE HORIZONTAL    -----//
+                // Prepara as condições para seleção dos dados
+                $this->prepareConditions($request->all());
+                
+                // Carrega os dados para o relatório
+                $this->reportConditions[]   = ['column' => 'G3_gerencialCentroCusto.analiseVertical', 'value'   => 'N'];
+        
+                // Identifica os Centros de Custo para a Análise Vertical
+                $this->centroCustoReport = GerencialCentroCusto::where('centroCustoAtivo', 'S')
+                                                                ->where('analiseVertical', 'N')
+                                                                ->orderBy('ordemExibicao')
+                                                                ->orderBy('descricaoCentroCusto')
+                                                                ->get();
+        
+                $horizontalData     = $this->lancamentos->getLancamentos(json_encode($this->reportConditions));
+        
+                // Prepara os dados para exibição no relatório
+                $this->prepareHorizontalData($horizontalData);
+        
+                // Gera e exibe o relatório
+                $horizontalReport   =  $this->generateReport('H');
+        
+                return $verticalReport.'<p>'.$horizontalReport;
+                break;
+            
+            /* LAYOUT: COMPARATIVO DE CENTRO DE CUSTO POR EMPRESA */
+            case 'comparativoEmpresa':
+                $this->lancamentos->setComparativoCCusto($request->codigoCentroCusto);
+                $this->reportLayoutView = 'comparativoMensal';
 
-        // Identifica os Centros de Custo para a Análise Vertical
-        $this->centroCustoReport = GerencialCentroCusto::where('centroCustoAtivo', 'S')
-                                                        ->where('analiseVertical', 'N')
-                                                        ->orderBy('ordemExibicao')
-                                                        ->orderBy('descricaoCentroCusto')
-                                                        ->get();
+            /* LAYOUT: COMPARATIVO MENSAL */
+            case 'comparativoMensal':
+                $this->reportLayoutView = 'comparativoMensal';
 
-        $horizontalData     = $this->lancamentos->getLancamentos(json_encode($this->reportConditions));
+                $this->reportData   = $this->lancamentos->getComparativoMensal($this->reportPeriodoMes, $this->reportPeriodoAno, $request->codigoEmpresa);
 
-        // Prepara os dados para exibição no relatório
-        $this->prepareHorizontalData($horizontalData);
+                $this->prepareDataComparativo();
 
-        // Gera e exibe o relatório
-        $horizontalReport   =  $this->generateReport('H');
+//                $this->reportLayout = 'comparativoMensal';
 
-        return $verticalReport.'<p>'.$horizontalReport;
+                return $this->generateReport();
+                break;
+        }
     }
 
     /**
@@ -198,7 +240,16 @@ class RelatorioGerencialController extends Controller
             if (!empty($conditions['codigoRegional']))  $this->empresaReport    = GerencialEmpresas::whereIn('codigoRegional', $conditions['codigoRegional'])->get();
         }
         
+        /**
+         *  Layout do relatório
+         *  empresa | regional | comparativoMensal | comparativoEmpresa | comparativoRegional
+         */
+        $this->reportLayout = $conditions['layoutRelatorio'];
 
+        /** DEFINE O PERÍODO PARA O RELATÓRIO */
+        $periodo    = explode('/', $conditions['periodo']);
+        $this->reportPeriodoMes = $periodo[0];
+        $this->reportPeriodoAno = $periodo[1];
 
         return (!empty($this->filterValidateErrors) ? FALSE : TRUE);
     }
@@ -249,13 +300,6 @@ class RelatorioGerencialController extends Controller
         if (isset($conditions['consolidado']))  $this->configReport->consolidado          = TRUE;
         else                                    $this->configReport->consolidado          = FALSE;
 
-        /**
-         *  Layout do relatório
-         *  empresa | regional | comparativoMensal | comparativoEmpresa | comparativoRegional
-         * 
-         */
-        $this->reportLayout = $conditions['layoutRelatorio'];
-
     }   //-- prepareCOnditions --//
 
 
@@ -274,8 +318,11 @@ class RelatorioGerencialController extends Controller
         if (empty($dataReport))     return FALSE;
 
         $this->preparedData = [];
-        
+        $csvData            = '';
+
         foreach ($dataReport as $row => $data) {
+            if (empty($this->reportCSVData))  $this->reportCSVData  = implode(';', array_keys((array) $data))."\n";
+            $csvData    .= implode(';', (array) $data)."\n";
 
             // Json Data
             if (!isset($this->preparedData['layoutEmpresa']
@@ -340,9 +387,11 @@ class RelatorioGerencialController extends Controller
             $this->hrTotals[stringMask($data->numeroContaGerencial, '##.###').' - '.$data->contaGerencial] += $data->valorLancamento;
         }
 
+        $this->reportCSVData    .= $csvData."\n";
+
     }   //-- prepareVerticalData --//
 
-/**
+    /**
      *  prepareHorizontalData
      *  Prepara os dados para exibição do relatório gerencial
      * 
@@ -357,8 +406,11 @@ class RelatorioGerencialController extends Controller
         if (empty($dataReport))     return FALSE;
 
         $this->preparedData = [];
-        
+        $csvData            = "";
+
         foreach ($dataReport as $row => $data) {
+            if (empty($this->reportCSVData))  $this->reportCSVData  = implode(';', array_keys((array) $data))."\n";
+            $csvData    .= implode(';', (array) $data)."\n";
 
             // Json Data
             if (!isset($this->preparedData['layoutEmpresa']
@@ -424,6 +476,8 @@ class RelatorioGerencialController extends Controller
             $this->hrTotals[stringMask($data->numeroContaGerencial, '##.###').' - '.$data->contaGerencial] += $data->valorLancamento;
         }
 
+        $this->reportCSVData    .= $csvData."\n";
+
     }   //-- prepareHorizontalData --//
 
     /**
@@ -482,8 +536,6 @@ class RelatorioGerencialController extends Controller
             $this->margemTotalHorizontal[$data->siglaCentroCusto]    += $data->valorMargemBruta;
             $this->receitaTotalHorizontal[$data->siglaCentroCusto]   += $data->valorReceita;
         }
-
-//dd('RV', $this->receitaVertical, 'RH', $this->receitaHorizontal);
     }
 
     /**
@@ -495,25 +547,45 @@ class RelatorioGerencialController extends Controller
      */
     private function generateReport($tipoAnalise = 'V') {
 
-        if (empty($this->preparedData)) return response("Não foi encontrada nenhuma informação para gerar o relatório", 500);
+        if (empty($this->preparedData)) return response()->json("Não foi encontrada nenhuma informação para gerar o relatório", 500);
         else {
-            return view("relatorios.gerencial.layoutEmpresa", ['configReport'           => $this->configReport,
-                                                                'configLoaded'          => $this->reportConfig,
-                                                                'infoConta'             => $this->contaGerencial->infoContaGer,
-                                                                'nomeEmpresaRegional'   => 'EMPRESA',
-                                                                'centrosCusto'          => $this->centroCustoReport,
-                                                                'empresas'              => $this->empresaReport,
-                                                                'reportData'            => $this->preparedData,
-                                                                'hrTotals'              => $this->hrTotals,
-                                                                'tipoAnalise'           => $tipoAnalise,
-                                                                'margemBrutaHorizontal' => $this->margemBrutaHorizontal,
-                                                                'margemBrutaVertical'   => $this->margemBrutaVertical,
-                                                                'margemTotalVertical'   => $this->margemTotalVertical,
-                                                                'margemTotalHorizontal' => $this->margemTotalHorizontal,
-                                                                'receitaTotalVertical'  => $this->receitaTotalVertical,
-                                                                'receitaTotalHorizontal'=> $this->margemTotalHorizontal,
-                                                                'receitaVertical'       => $this->receitaVertical,
-                                                                'receitaHorizontal'     => $this->receitaHorizontal
+
+/*             $layout = ($this->reportLayout == 'layoutRegional' ? 'layoutEmpresa' : $this->reportLayout);
+
+            if ($this->lancamentos->comparativoCentroCusto) {
+                $layout = 'comparativoMensal';
+            }
+ */
+
+            return view("relatorios.gerencial.".$this->reportLayoutView, [  'configReport'           => $this->configReport,
+                                                            'configLoaded'          => $this->reportConfig,
+                                                            'configData'            => $this->reportConfigData,
+                                                            'infoConta'             => $this->contaGerencial->infoContaGer,
+                                                            'nomeEmpresaRegional'   => 'EMPRESA',
+                                                            'centrosCusto'          => $this->centroCustoReport,
+                                                            'empresas'              => $this->empresaReport,
+                                                            'reportData'            => $this->preparedData,
+                                                            'hrTotals'              => $this->hrTotals,
+                                                            'tipoAnalise'           => $tipoAnalise,
+                                                            'margemBrutaHorizontal' => $this->margemBrutaHorizontal,
+                                                            'margemBrutaVertical'   => $this->margemBrutaVertical,
+                                                            'margemTotalVertical'   => $this->margemTotalVertical,
+                                                            'margemTotalHorizontal' => $this->margemTotalHorizontal,
+                                                            'receitaTotalVertical'  => $this->receitaTotalVertical,
+                                                            'receitaTotalHorizontal'=> $this->margemTotalHorizontal,
+                                                            'receitaVertical'       => $this->receitaVertical,
+                                                            'receitaHorizontal'     => $this->receitaHorizontal,
+                                                            'layout'                => $this->reportLayout,
+                                                            'mesInicio'             => 1,
+                                                            'mesFinal'              => $this->reportPeriodoMes,
+                                                            'ano'                   => $this->reportPeriodoAno,
+                                                            'csvData'               => $this->reportCSVData,
+
+                                                            // FILTRO GERENCIAL
+                                                            'listaEmpresas'         => $this->listaEmpresas, 
+                                                            'listaRegionais'        => $this->listaRegionais, 
+                                                            'listaCentroCusto'      => $this->listaCentroCusto,
+                                                            'showHide'              => 'collapse'
                                                             ]);
         }
     }
@@ -549,5 +621,108 @@ class RelatorioGerencialController extends Controller
         return view("relatorios.gerencial.detalheConta", ['reportData' => $reportData]); //['dataDetalhe' => $dataDetalhe, 'cabecalho' => $cabecalho]);
     }
 
+    /**
+     *  prepareDataComparativo
+     *  Prepara os dados para exibição do relatório gerencial nos layouts de comparativos 
+     * 
+     *  @param  object      $this->reportData
+     */
+    private function prepareDataComparativo() {
+        if (empty($this->reportData))     return FALSE;
+
+        $this->preparedData = [];
+        $csvData            = '';
+
+        $this->calculavariacao();
+        
+        foreach ($this->reportData as $row => $data) {
+            if (empty($this->reportCSVData))  $this->reportCSVData  = implode(';', array_keys((array) $data)).";HR(%);VR(%)\n";
+            $csvData    .= implode(';', (array) $data).
+                            ';'.$this->variacaoHorizontal[$data->numeroContaGerencial][$data->mes].
+                            ';'.$this->variacaoVertical[$data->numeroContaGerencial][$data->mes]."\n";
+
+            // Json Data
+            $this->preparedData[$this->reportLayout]
+                                [$data->nomeEmpresa]
+                                [$data->subGrupoConta]
+                                [$data->grupoConta]
+                                [stringMask($data->numeroContaGerencial, '##.###').' - '.$data->contaGerencial]
+                                ['jsonData']    = json_encode($data);
+
+            // REPORT DATA POR EMPRESA / MÊS
+            $this->preparedData[$this->reportLayout]
+                                [$data->nomeEmpresa]
+                                [$data->subGrupoConta]
+                                [$data->grupoConta]
+                                [stringMask($data->numeroContaGerencial, '##.###').' - '.$data->contaGerencial]
+                                [$data->mes]    = [ 'valor'         => $data->saldoLancamento,
+                                                    'horizontal'    => $this->variacaoHorizontal[$data->numeroContaGerencial][$data->mes],
+                                                    'vertical'      => $this->variacaoVertical[$data->numeroContaGerencial][$data->mes]
+                                                    ];
+
+
+            // Acumula o total da conta (horizontal)
+            if (!isset($this->hrTotals[stringMask($data->numeroContaGerencial, '##.###').' - '.$data->contaGerencial])) {
+                $this->hrTotals[stringMask($data->numeroContaGerencial, '##.###').' - '.$data->contaGerencial] = 0;
+            }
+            $this->hrTotals[stringMask($data->numeroContaGerencial, '##.###').' - '.$data->contaGerencial] += $data->saldoLancamento;
+        }
+
+        $this->reportCSVData    .= $csvData."\n";
+
+    }   //-- prepareDataComparativo --//
+
+
+    protected function calculaVariacao() {
+
+        $horizontal     = [];
+        $vertical       = [];
+        $receita        = [];
+        $saldoAnterior  = [];
+
+        foreach ($this->reportData as $row => $data) {
+            if (!isset($saldoAnterior[$data->numeroContaGerencial][($data->mes - 1)])) {
+                $saldoAnterior[$data->numeroContaGerencial][($data->mes - 1)] = 0;
+            }
+            $saldoAnterior[$data->numeroContaGerencial][$data->mes]  = $data->saldoLancamento;
+
+            /**
+             * VARIAÇÃO HORIZONTAL (%)
+             * (Valor do Mês Corrente / Valor de Mês Anterior)
+             * 1 - ((Valor atual / Valor mês anterior) * 100)
+             * 
+             */
+            if (isset($horizontal[$data->numeroContaGerencial][($data->mes - 1)])) {
+                if ($data->saldoLancamento == 0 || 
+                    $saldoAnterior[$data->numeroContaGerencial][($data->mes - 1)] == 0)    $horizontal[$data->numeroContaGerencial][$data->mes] = 0;
+                else    $horizontal[$data->numeroContaGerencial][$data->mes] = 1 - (($data->saldoLancamento / $saldoAnterior[$data->numeroContaGerencial][($data->mes - 1)]) * 100);
+            }
+            else {
+                $horizontal[$data->numeroContaGerencial][$data->mes] = 0;
+            }
+
+            /**
+             * VARIAÇÃO VERTICAL (%)
+             * (valor da conta no mês / valor total da receita mês)
+             * 
+             */
+            // Acumula os valores de receita
+            if (!isset($receita[$data->mes]))   $receita[$data->mes] = 0;
+            $receita[$data->mes] += $data->totalReceita;
+
+            // Calcula o valor da variação VERTICAL da conta
+            if ($data->totalReceita == 0) {
+                if ($data->saldoLancamento == 0 || $receita[$data->mes] == 0) $vertical[$data->numeroContaGerencial][$data->mes] = 0;
+                else  $vertical[$data->numeroContaGerencial][$data->mes] = ( ($data->saldoLancamento / $receita[$data->mes]) * 100 );
+            }
+            else {
+                $vertical[$data->numeroContaGerencial][$data->mes] = 0;
+            }
+        }
+
+        $this->variacaoHorizontal   = $horizontal;
+        $this->variacaoVertical     = $vertical;
+
+    }
 
 }

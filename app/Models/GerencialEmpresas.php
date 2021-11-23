@@ -68,7 +68,9 @@ class GerencialEmpresas extends Model
                         'validaIntegracaoContabil'  => 'nullable', 
                         'validaLoteContabil'        => 'nullable', 
                         'rateioAdmLocal'            => 'nullable', 
-                        'rateioLogistica'           => 'nullable'];
+                        'rateioLogistica'           => 'nullable',
+                        'codigoEmpresaDP'           => 'nullable',
+                        'codigoFilialDP'            => 'nullable'];
 
     public $rulesMessage    = [ 'codigoEmpresaERP'          => 'CÓDIGO NO ERP (Workflow): Obrigatório',
                                 'codigoRegional'            => 'REGIONAL: Obrigatório',
@@ -129,11 +131,10 @@ class GerencialEmpresas extends Model
      *  Drop das empresas cadastradas no DP (Ruby)
      */
      public function custom_codigoEmpresaDP($values = NULL, $multi = FALSE) {
-        $empresaDP  = DB::connection('local')
-                        ->select('SELECT codigoEmpresa  = r030emp.numemp,
+        $empresaDP  = DB::select('SELECT codigoEmpresa  = r030emp.numemp,
                                          nomeEmpresa    = r030emp.nomemp,
-                                         apelidoEmpresa = r030emp.apeemp
-                                 FROM Vetorh.Vetorh.r030emp     (nolock)
+                                         apelidoEmpresa = r030emp.nomemp
+                                 FROM gama..r030emp     (nolock)
                                  ORDER BY apelidoEmpresa');
 
         $htmlForm  = "<select class='form-control updateFormData' name='codigoEmpresaDP".($multi ? '[]\' multiple' : '\'')." id='codigoEmpresaDP' ";
@@ -157,11 +158,10 @@ class GerencialEmpresas extends Model
      *  Drop das empresas cadastradas no DP (Ruby)
      */
      public function custom_codigoFilialDP($values = NULL, $multi = FALSE) {
-        $empresaDP = DB::connection('local')
-                        ->select('SELECT codigoEmpresa  = r030fil.numemp,
+        $empresaDP = DB::select('SELECT codigoEmpresa  = r030fil.numemp,
                                          codigoFilial   = r030fil.codfil,
                                          nomeFilial     = r030fil.nomfil
-                                 FROM Vetorh.Vetorh.r030fil     (nolock)
+                                 FROM gama..r030fil     (nolock)
                                  '.(!empty($values) ? 'WHERE r030fil.numemp = '.$values : '').'
                                  ORDER BY nomeFilial');
 
