@@ -25,10 +25,10 @@ class GerencialTabelaRateioController extends Controller
         $this->utils        = new Utilitarios;
 
         // Define a ordenação dos dados
-        if (!isset($request->columnOrder) || empty($request->columnOrder) ) $request->columnOrder = 'descricao';
-        $this->orderColumn = $request->columnOrder;
+        // if (!isset($request->columnOrder) || empty($request->columnOrder) ) $request->columnOrder = 'descricao';
+        $this->orderColumn = 'descricao';   //$request->columnOrder;
 
-        $this->tableData  = GerencialTabelaRateio::orderBy($request->columnOrder)->get();
+        $this->tableData  = GerencialTabelaRateio::orderBy($this->orderColumn)->get();
         $this->model      = app('App\\Models\\GerencialTabelaRateio');
         $this->tableName  = $this->model->getTable();
 
@@ -90,7 +90,7 @@ class GerencialTabelaRateioController extends Controller
                 $dataPercentual->idTabela       = $gerencialTabela->id;
                 $dataPercentual->idEmpresa      = $codigoEmpresa;
                 $dataPercentual->idCentroCusto  = $codigoCentroCusto;
-                $dataPercentual->percentual     = $percentual;
+                $dataPercentual->percentual     = str_replace(',','.',$percentual);
     
                 $percentuais[]  = $dataPercentual;
             }
@@ -109,7 +109,7 @@ class GerencialTabelaRateioController extends Controller
 
         $request->session()->flash('message', 'Dados gravados com sucesso!');
 
-        return redirect('tabelaRateio/index');
+        redirect('tabelaRateio.index');
         
     }
 
@@ -179,10 +179,15 @@ class GerencialTabelaRateioController extends Controller
      */
     public function destroy(Request $request, $id)
     {
+        // Exclui os registros da tabela de percentuais
+        $delPercentuais  = GerencialTabelaRateioPercentual::where('idTabela', $id)->delete();
+//        $delPercentuais->delete();
+
+        // Exclui a tablea de rateio
         $del = GerencialTabelaRateio::find($id);
         $del->delete();
 
-        $this->tableData  = GerencialTabelaRateio::orderby('nomeAlternativo')->get();
+        $this->tableData  = GerencialTabelaRateio::orderby('descricao')->get();
         
         redirect('tabelaRateio.index');
     }

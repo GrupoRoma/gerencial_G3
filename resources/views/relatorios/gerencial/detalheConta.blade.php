@@ -94,7 +94,7 @@
                     @php    $lastCCusto     = $data->codigoCentroCusto; @endphp
                 @endif
 
-                <tr data-toggle="tooltip" title="{{$data->historico}}">
+                <tr data-toggle="tooltip" title="{{$data->historico}}" data-razao='{"mesLancamento": {{$data->mesLancamento}}, "anoLancamento": {{$data->anoLancamento}},"codigoConta": "{{$data->codigoContaContabilERP}}", "codigoEmpresa": "{{$data->codigoEmpresa}}", "codigoCentroCusto": {{$data->codigoCentroCusto}}}'>
                     <td class="text-center">
                         @if ($data->valorLancamento > 0)    CRD
                         @else                               DEB
@@ -159,3 +159,70 @@
         </tbody>
     </table>
 </div>
+
+{{-- Modal para exibição de mensagens --}}
+<div class="modal fade modalRazao" id="razaoContabil" tabindex="-1" role="dialog" z-index="1000">
+    <div class="modal-dialog" role="document">
+    <div class="modal-content bg-gray">
+        <div class="modal-header">
+        <h5 class="modal-title">LANÇAMENTOS CONTÁBEIS</h5>
+<!--        <button type="button" class="close" data-dismiss="modalRazao" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    -->
+        </div>
+        <div class="modal-body">
+            <!--// Mensagem //-->
+        </div>
+    </div>
+    </div>
+</div>
+
+{{-- SCRIPT PARA EXIBIÇÃO DO RAZÃO CONÁBIL --}}
+<script>
+    $(document).ready(function() { runJq(); });
+    $(document).ajaxComplete(function() { runJq(); });
+
+    function runJq() {
+        $('[data-razao]').off('click').on('click', function(event) {
+            event.preventDefault();
+
+            // Executa o método para listar o detalhamento da conta
+            $.ajax({
+                data    : 'dadosRazao='+JSON.stringify( $(this).data('razao') ),
+                // LOCAL - DESENVOLVIMENTO
+                url     : document.location+'public/gerencialRazao',
+
+                // PRODUÇÃO
+                //url     : document.location+'gerencialRazao',
+
+                method  : 'POST',
+                beforeSend: function() {
+                    $('#loadSpinner').removeClass("d-none").addClass("d-flex");
+                },
+                success : function(data, status, xhr) {
+                    $('#razaoContabil .modal-title').html('LANÇAMENTOS CONTÁBEIS');
+                    $('#razaoContabil .modal-body').html(data);
+                    $('#razaoContabil .modal-dialog').addClass('modal-dialog-centered');
+                    $('#razaoContabil .modal-dialog').addClass('modal-lg');
+                    $('#razaoContabil').modal('show');
+                },
+                error: function(data, status, xhr) {
+                    $('#razaoContabil .modal-title').html('LANÇAMENTOS CONTÁBEIS');
+                    $('#razaoContabil .modal-body').html('Ocorreu um erro inesperado.');
+                    $('#razaoContabil').modal('show');
+                    
+                    $('#razaoContabil .modal-header').addClass("modal-header-error");
+                    
+                    $('#loadSpinner').removeClass("d-flex").addClass("d-none");
+                }
+            }).done(function() {
+                $('#loadSpinner').removeClass("d-flex").addClass("d-none");
+            });
+
+            //$('#razaoContabil').modal('show');
+
+        });
+    }
+
+</script>

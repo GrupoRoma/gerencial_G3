@@ -1,6 +1,6 @@
 {
-        "thisFile": "lancamentosGerenciais",
-        "configReport": { "reportName": "LANÇAMENTOS GERENCIAIS",
+        "thisFile": "reportArquivosCSV-config",
+        "configReport": { "reportName": "ARQUIVOS DE LOTE (CSV) IMPORTADOS",
                              "pageFormat": "A4",
                              "pageSize": "297mm 210mm",
                              "orientation": "landscape",
@@ -9,7 +9,7 @@
                              "pageNumberOn": "footer",
                              "printCover": false
                            },
-        "reportHeader": { "title": "RELATÓRIO DE LANÇAMENTOS GERENCIAIS - GRUPO ROMA",
+        "reportHeader": { "title": "RELATÓRIO DE LANÇAMENTOS IMPORTADOS DE ARQUIVOS CSV - GRUPO ROMA",
                              "subTitle": "",
                              "showDateTime": true,
                              "showLogo": true,

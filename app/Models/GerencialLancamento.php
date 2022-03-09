@@ -169,12 +169,13 @@ class GerencialLancamento extends Model
     }
 
     public function custom_codigoContaContabil($values = NULL, $multi = FALSE) {
-        $customData = DB::select("SELECT codigoContaContabil= G3_gerencialContaContabil.contaContabil,
-                                         descricaoConta     = PlanoConta.PlanoConta_Descricao 
-                                  FROM G3_gerencialContaContabil
-                                  JOIN GrupoRoma_DealernetWF..PlanoConta (nolock) ON PlanoConta.PlanoConta_ID collate SQL_Latin1_General_CP1_CI_AS = G3_GerencialContaContabil.contaContabil
+        $customData = DB::select("SELECT    codigoContaContabilERP  = PlanoConta.PlanoConta_Codigo, 
+                                            codigoContaContabil     = G3_gerencialContaContabil.contaContabil,
+                                            descricaoConta          = PlanoConta.PlanoConta_Descricao 
+                                  FROM  G3_gerencialContaContabil
+                                  JOIN  GrupoRoma_DealernetWF..PlanoConta (nolock) ON PlanoConta.PlanoConta_ID collate SQL_Latin1_General_CP1_CI_AS = G3_GerencialContaContabil.contaContabil
                                   WHERE PlanoConta.Estrutura_Codigo = 5 
-                                  AND PlanoConta.PlanoConta_TipoContabil in ('RES', 'DSP', 'REC', 'ATV') 
+                                  AND   PlanoConta.PlanoConta_TipoContabil in ('RES', 'DSP', 'REC', 'ATV') 
                                   ORDER BY contaContabil");
 
         $htmlForm = "<select class='form-control' name='codigoContaContabil".($multi ? '[]\' multiple' : '\'')." id='codigoContaContabil'>";
@@ -182,7 +183,7 @@ class GerencialLancamento extends Model
 
         $values = explode(',', $values);
         foreach ($customData as $row => $data) {
-            $htmlForm .= "<option value='".$data->codigoContaContabil."' ".(in_array($data->codigoContaContabil, $values) ? 'selected' : '').">".
+            $htmlForm .= "<option value='".$data->codigoContaContabilERP."' ".(in_array($data->codigoContaContabilERP, $values) ? 'selected' : '').">".
                             $data->codigoContaContabil.' '.$data->descricaoConta.
                          "</option>";
         }
@@ -303,7 +304,9 @@ class GerencialLancamento extends Model
                                             codigoContaGerencial	= G3_gerencialContaGerencial.id,
                                             codigoContaContabilERP	= G3_gerencialContaContabil.codigoContaContabilERP,
                                             codigoEmpresa			= G3_gerencialLancamentos.idEmpresa,
-                                            codigoEmpresaERP        = G3_gerencialEmpresas.codigoEmpresaERP
+                                            codigoEmpresaERP        = G3_gerencialEmpresas.codigoEmpresaERP,
+                                            codigoRegional          = G3_gerencialEmpresas.codigoRegional,
+                                            importaSaldoInvertido   = G3_gerencialContaContabil.saldoInvertido
                                     FROM GAMA..G3_gerencialLancamentos							(nolock)
                                     JOIN GAMA..G3_gerencialEmpresas								(nolock) ON G3_gerencialEmpresas.id					= G3_gerencialLancamentos.idEmpresa
                                     JOIN GAMA..G3_gerencialRegional								(nolock) ON G3_gerencialRegional.id					= G3_gerencialEmpresas.codigoRegional
@@ -313,9 +316,10 @@ class GerencialLancamento extends Model
                                     JOIN GAMA..G3_gerencialSubGrupoConta						(nolock) ON G3_gerencialSubGrupoConta.id			= G3_gerencialGrupoConta.idSubGrupoConta
                                     JOIN GAMA..G3_gerencialTipoLancamento						(nolock) ON G3_gerencialTipoLancamento.id			= G3_gerencialLancamentos.idTipoLancamento
                                     JOIN GAMA..G3_gerencialUsuarios								(nolock) ON G3_gerencialUsuarios.id					= G3_gerencialLancamentos.idUsuario
-                                    LEFT JOIN GAMA..G3_users									(nolock) ON G3_users.id								= G3_gerencialLancamentos.idUsuario
+                                    LEFT JOIN GAMA..users									    (nolock) ON users.id								= G3_gerencialLancamentos.idUsuario
                                     --JOIN GAMA..G3_gerencialContaContabil						(nolock) ON G3_gerencialContaContabil.contaContabil	= G3_gerencialLancamentos.codigoContaContabil
                                     LEFT JOIN GAMA..G3_gerencialContaContabil					(nolock) ON CONVERT(nvarchar, G3_gerencialContaContabil.codigoContaContabilERP)	= G3_gerencialLancamentos.codigoContaContabil
+                                                                                                        AND G3_gerencialContaContabil.idContaGerencial = G3_gerencialLancamentos.idContaGerencial
                                     LEFT JOIN GAMA..G3_gerencialLancamentos lancamentoOrigem	(nolock) ON lancamentoOrigem.id						= G3_gerencialLancamentos.idLancamentoOrigem
                                     
                                     WHERE	1 = 1
@@ -332,12 +336,104 @@ class GerencialLancamento extends Model
                                              $groupColumns
                                              
                                              G3_gerencialContaGerencial.id, G3_gerencialContaContabil.codigoContaContabilERP,
-                                             G3_gerencialLancamentos.idEmpresa, G3_gerencialEmpresas.codigoEmpresaERP
+                                             G3_gerencialLancamentos.idEmpresa, G3_gerencialEmpresas.codigoEmpresaERP, G3_gerencialEmpresas.codigoRegional, G3_gerencialContaContabil.saldoInvertido
                                     
-                                    ORDER BY nomeRegional, nomeEmpresa, G3_gerencialGrupoConta.ordemExibicao, anoLancamento, mesLancamento, codigoGrupoConta, subGrupoConta, codigoContaGerencial, centroCusto");
+                                    ORDER BY nomeRegional, nomeEmpresa, G3_gerencialGrupoConta.ordemExibicao, anoLancamento, mesLancamento, codigoGrupoConta, subGrupoConta, codigoContaGerencial, centroCusto, codigoContaContabilERP");
         return $lancamentos;
 
     }   //-- getLancamentos --//
+
+/**
+     *  getLancamentosRegional
+     *  Retorna todos os lançamentos registrados conforme os critérios informados,
+     *  agrupando dados e valores por regional
+     * 
+     *  @param  object  lista de critérios para seleção dos lançamentos (jSON)
+     * 
+     *  @return object  {["column": "nome_da_coluna", "operator": "simbolo_operacao-ex: =, <>, ...", "value": "valor_filtro"], [...]}
+     * 
+     */
+    public function getLancamentosRegional($params = NULL) {
+        $filter = '';
+
+        if (!empty($params)) {
+            $params = json_decode($params);
+
+            foreach ($params as $key => $condition) {
+                $filter .= "\nAND   ".$condition->column." ";
+                $filter .= (isset($condition->operator) ? $condition->operator : '=');
+                
+                if (is_array($condition->value) || is_object($condition->value)) {
+                    $filter .= ' (';
+                    foreach ($condition->value as $inValue) {
+                        $filter .= $inValue.',';
+                    }
+                    $filter = substr($filter,0 , -1).') ';
+                }
+                else $filter .= "'".$condition->value."'";
+            }
+        }
+
+        $addColumns     = NULL;
+        $groupColumns   = NULL;
+        if (isset($this->getColumns) && !empty($this->getColumns)) {
+            foreach ($this->getColumns as $labelName => $columnName) {
+                $addColumns     .= $labelName.' = '.$columnName.',';
+                $groupColumns   .= $columnName.',';
+            }
+        }
+
+        $lancamentos = DB::select("SELECT   anoLancamento			= G3_gerencialLancamentos.anoLancamento,
+                                            mesLancamento			= G3_gerencialLancamentos.mesLancamento,
+                                            mesAnoLancamento		= CONVERT(VARCHAR, G3_gerencialLancamentos.mesLancamento)+'/'+CONVERT(VARCHAR,G3_gerencialLancamentos.anoLancamento),
+                                            numeroContaGerencial	= G3_gerencialContaGerencial.codigoContaGerencial,
+                                            contaGerencial			= G3_gerencialContaGerencial.descricaoContaGerencial,
+                                            nomeEmpresa				= G3_gerencialRegional.descricaoRegional,
+                                            nomeRegional			= G3_gerencialRegional.descricaoRegional,
+                                            codigoGrupoConta		= G3_gerencialGrupoConta.codigoGrupoConta,
+                                            grupoConta				= G3_gerencialGrupoConta.descricaoGrupoConta,
+                                            subGrupoConta			= G3_gerencialSubGrupoConta.descricaoSubGrupoConta,
+                                            codigoCentroCusto       = G3_gerencialLancamentos.centroCusto,
+                                            siglaCentroCusto		= G3_gerencialCentroCusto.siglaCentroCusto,
+                                            centroCusto				= G3_gerencialCentroCusto.descricaoCentroCusto,
+                                            valorLancamento			= SUM(G3_gerencialLancamentos.valorLancamento),
+
+                                            $addColumns
+
+                                            codigoContaGerencial	= G3_gerencialContaGerencial.id,
+                                            codigoRegional          = G3_gerencialEmpresas.codigoRegional
+                                    FROM GAMA..G3_gerencialLancamentos							(nolock)
+                                    JOIN GAMA..G3_gerencialEmpresas								(nolock) ON G3_gerencialEmpresas.id					= G3_gerencialLancamentos.idEmpresa
+                                    JOIN GAMA..G3_gerencialRegional								(nolock) ON G3_gerencialRegional.id					= G3_gerencialEmpresas.codigoRegional
+                                    JOIN GAMA..G3_gerencialCentroCusto							(nolock) ON G3_gerencialCentroCusto.id				= G3_gerencialLancamentos.centroCusto
+                                    JOIN GAMA..G3_gerencialContaGerencial						(nolock) ON G3_gerencialContaGerencial.id			= G3_gerencialLancamentos.idContaGerencial
+                                    JOIN GAMA..G3_gerencialGrupoConta							(nolock) ON G3_gerencialGrupoConta.id				= G3_gerencialContaGerencial.idGrupoConta
+                                    JOIN GAMA..G3_gerencialSubGrupoConta						(nolock) ON G3_gerencialSubGrupoConta.id			= G3_gerencialGrupoConta.idSubGrupoConta
+                                    JOIN GAMA..G3_gerencialTipoLancamento						(nolock) ON G3_gerencialTipoLancamento.id			= G3_gerencialLancamentos.idTipoLancamento
+                                    JOIN GAMA..G3_gerencialUsuarios								(nolock) ON G3_gerencialUsuarios.id					= G3_gerencialLancamentos.idUsuario
+                                    LEFT JOIN GAMA..users						    			(nolock) ON users.id								= G3_gerencialLancamentos.idUsuario
+                                    LEFT JOIN GAMA..G3_gerencialContaContabil					(nolock) ON CONVERT(nvarchar, G3_gerencialContaContabil.codigoContaContabilERP)	= G3_gerencialLancamentos.codigoContaContabil
+                                                                                                        AND G3_gerencialContaContabil.idContaGerencial = G3_gerencialLancamentos.idContaGerencial
+                                    LEFT JOIN GAMA..G3_gerencialLancamentos lancamentoOrigem	(nolock) ON lancamentoOrigem.id						= G3_gerencialLancamentos.idLancamentoOrigem
+                                    
+                                    WHERE	1 = 1
+                                    AND     G3_gerencialEmpresas.empresaAtiva           = 'S'
+                                    AND     G3_gerencialCentroCusto.centroCustoAtivo    = 'S'
+                                    
+                                    $filter
+                                    
+                                    GROUP BY G3_gerencialLancamentos.anoLancamento, G3_gerencialLancamentos.mesLancamento, G3_gerencialContaGerencial.codigoContaGerencial, G3_gerencialContaGerencial.descricaoContaGerencial,
+                                             G3_gerencialRegional.descricaoRegional, G3_gerencialGrupoConta.ordemExibicao, G3_gerencialGrupoConta.codigoGrupoConta, G3_gerencialGrupoConta.descricaoGrupoConta,
+                                             G3_gerencialSubGrupoConta.descricaoSubGrupoConta, G3_gerencialLancamentos.centroCusto, G3_gerencialCentroCusto.siglaCentroCusto, G3_gerencialCentroCusto.descricaoCentroCusto, 
+
+                                             $groupColumns
+                                             
+                                             G3_gerencialContaGerencial.id, G3_gerencialEmpresas.codigoRegional
+                                    
+                                    ORDER BY nomeRegional, G3_gerencialGrupoConta.ordemExibicao, anoLancamento, mesLancamento, codigoGrupoConta, subGrupoConta, codigoContaGerencial, centroCusto");
+        return $lancamentos;
+
+    }   //-- getLancamentosRegional --//
 
     /**
      *  Retorna todos os lançamentos registrados na(s) empresa(s) e centro(s) de custo de destino
@@ -437,8 +533,7 @@ class GerencialLancamento extends Model
      *                               'valorLancamento',
      *                               'historicoLancamento', 
      *                               'idTipoLancamento',
-     *                               'codigoContaContabil',
-     *                               'idUsuario'])
+     *                               'codigoContaContabil'])
      * 
      *  @return boolean 
      * 
@@ -503,20 +598,34 @@ class GerencialLancamento extends Model
 
             $this->historicoGravaLancamento = $dadosRegistro->historicoLancamento;
 
-            $codigoEmpresa      = $this->checkTransferenciaEmpresa($dadosRegistro->idEmpresa);
-            $codigoCentroCusto  = $this->checkTransferenciaCentroCusto($dadosRegistro->centroCusto);
+            $codigoEmpresa      = $this->checkTransferenciaEmpresa($dadosRegistro->idEmpresa, $dadosRegistro->centroCusto);
+            $codigoCentroCusto  = $this->checkTransferenciaCentroCusto($dadosRegistro->centroCusto, $dadosRegistro->idEmpresa);
+
+            // VERIFICA SE O SALDO DEVE SER REGISTRADO COM VALOR INVERTIDO
+            // Se for especificada uma conta contabil e a conta contabil não estiver nula
+            if (isset($dadosRegistro->codigoContaContabil) 
+                && !empty($dadosRegistro->codigoContaContabil)
+                && $this->saldoInvertido($dadosRegistro))  {
+                $valorLancamento    = $dadosRegistro->valorLancamento * -1;
+                if ($valorLancamento > 0 )  $creditoDebito  = 'CRD';
+                else                        $creditoDebito  = 'DEB';
+            }
+            else  {
+                $valorLancamento    = $dadosRegistro->valorLancamento;
+                $creditoDebito      = $dadosRegistro->creditoDebito;
+            }
 
             $dataSave     = "(".$dadosRegistro->mesLancamento.",
                                 ".$dadosRegistro->anoLancamento.",
                                 ".$codigoEmpresa.",
                                 ".$codigoCentroCusto.",
                                 ".$dadosRegistro->idContaGerencial.",
-                                '".$dadosRegistro->creditoDebito."',
-                                ".$dadosRegistro->valorLancamento.",
+                                '".$creditoDebito."',
+                                ".$valorLancamento.",
                                 '".$this->historicoGravaLancamento."',
                                 ".$dadosRegistro->idTipoLancamento.",
                                 ".(isset($dadosRegistro->codigoContaContabil) ? $dadosRegistro->codigoContaContabil : "NULL").",
-                                1,  
+                                ".session('userID').",  
                                 '".date('Y-m-d H:i:s')."',
                                 '".date('Y-m-d H:i:s')."'".$otherValues.")";
             $saved ++;
@@ -589,21 +698,42 @@ class GerencialLancamento extends Model
      *  Verifica se existe parâmetro para transferência dos valores de uma empresa para outra
      * 
      *  @param  int     Codigo da empresa de Origem
+     *  @param  int     Código do centro de Custo (Nulo)
      * 
      *  @return int     Código da empresa para registro do lançamento gerencial
      */
-    public function checkTransferenciaEmpresa($codigoEmpresa) {
-        $dbData         = GerencialParametroEmpresa::where('idEmpresaOrigem', $codigoEmpresa)
+    public function checkTransferenciaEmpresa($codigoEmpresa, $codigoCentroCusto = NULL) {
+        // TRANSFERÊNCIA DE EMPRESAS - GERAL
+        //  Retorna a empresa para a qual devem ser transferidos todos os lançamentos
+        $dbEmpresa      = GerencialParametroEmpresa::where('idEmpresaOrigem', $codigoEmpresa)
+                                                    ->whereNull('idCentroCusto')
                                                     ->where('parametroAtivo', 'S')->get();
+
+        // TRANSFERÊNCIA DE CENTRO DE CUSTO ENTRE EMPRESAS
+        //  Retorna a empresa para a qual devem ser transferidos todos os lançamentos
+        //  do Centro de custo informado
+        $dbEmpresaCentroCusto   = GerencialParametroEmpresa::where('idEmpresaOrigem', $codigoEmpresa)
+                                                            ->where('idCentroCusto', $codigoCentroCusto)
+                                                            ->where('parametroAtivo', 'S')->get();
 
         $empresaOrigem  = GerencialEmpresas::find($codigoEmpresa);
 
-        if (count($dbData) > 0) {
-            $empresaDestino  = GerencialEmpresas::find($dbData[0]->idEmpresaDestino);
+        if (count($dbEmpresaCentroCusto) > 0) {
+            $empresaDestino  = GerencialEmpresas::find($dbEmpresaCentroCusto[0]->idEmpresaDestino);
+            $centroCusto     = GerencialCentroCusto::find($codigoCentroCusto);
+
+            $this->historicoGravaLancamento .= ' [TRANSFERÊNCIA ENTRE EMPRESAS DE '.
+                                                 $empresaOrigem->nomeAlternativo.
+                                                 ' PARA '.$empresaDestino->nomeAlternativo.' | SOMENTE CENTRO DE CUSTO '.$centroCusto->descricaoCentroCusto.'] ';
+            return $dbEmpresaCentroCusto[0]->idEmpresaDestino;
+        }
+        elseif (count($dbEmpresa) > 0) {
+            $empresaDestino  = GerencialEmpresas::find($dbEmpresa[0]->idEmpresaDestino);
+
             $this->historicoGravaLancamento .= ' [TRANSFERÊNCIA ENTRE EMPRESAS DE '.
                                                  $empresaOrigem->nomeAlternativo.
                                                  ' PARA '.$empresaDestino->nomeAlternativo.'] ';
-            return $dbData[0]->idEmpresaDestino;
+            return $dbEmpresa[0]->idEmpresaDestino;
         }
         else                    return $codigoEmpresa;
     }
@@ -612,25 +742,72 @@ class GerencialLancamento extends Model
      *  Verifica se existe parâmetro para transferência dos valores de um centro de custo para outro
      * 
      *  @param  int     Codigo do centro de custo de Origem
+     *  @param  int     Código da empresa
      * 
      *  @return int     Código do centro de custo para registro do lançamento gerencial
      */
-    public function checkTransferenciaCentroCusto($codigoCentroCusto) {
-        $dbData             = GerencialParametroCentroCusto::where('idCentroCustoOrigem', $codigoCentroCusto)
-                                                            ->where('parametroAtivo', 'S')->get();
+    public function checkTransferenciaCentroCusto($codigoCentroCusto, $codigoEmpresa = NULL) {
+        // Centro Custo GERAL
+        //  Retorna o novo centro de custo para transferir os lançamentos
+        //  na sua totalidade, INDEPENDENTE DA EMPRESA
+        //
+        //  CENTRO DE CUSTO DE ORIGEM = $codigoCentroCusto (informado)
+        //  EMPRESA                   = NULL (empresa não informada)
+        $dbCentroCusto          = GerencialParametroCentroCusto::where('idCentroCustoOrigem', $codigoCentroCusto)
+                                                                ->whereNull('idEmpresa')
+                                                                ->where('parametroAtivo', 'S')->get();
+
+                                                            // Centro Custo GERAL
+        //  Retorna o novo centro de custo para transferir os lançamentos
+        //  DA EMPRESA informada
+        //
+        //  CENTRO DE CUSTO DE ORIGEM = $codigoCentroCusto (informado)
+        //  EMPRESA                   = $codigoEmpresa (empresa informada)
+        $dbCentroCustoEmpresa   = GerencialParametroCentroCusto::where('idCentroCustoOrigem', $codigoCentroCusto)
+                                                                ->where('idEmpresa', $codigoEmpresa)
+                                                                ->where('parametroAtivo', 'S')->get();
                                                             
         $centroCustoOrigem  = GerencialCentroCusto::find($codigoCentroCusto);
+        $empresaOrigem      = GerencialEmpresas::find($codigoEmpresa);
         
-        if (count($dbData) > 0) {
-            $centroCustoDestino = GerencialCentroCusto::find($dbData[0]->idCentroCustoDestino);
+        // SOMENTE CENTRO DE CUSTO
+        if (count($dbCentroCusto) > 0) {
+            $centroCustoDestino = GerencialCentroCusto::find($dbCentroCusto[0]->idCentroCustoDestino);
             $this->historicoGravaLancamento .= ' [TRANSFERÊNCIA ENTRE CENTROS DE CUSTO DE '.
                                                  $centroCustoOrigem->descricaoCentroCusto.
                                                  ' PARA '.$centroCustoDestino->descricaoCentroCusto.']';
-            return $dbData[0]->idCentroCustoDestino;
-        } 
+            return $dbCentroCusto[0]->idCentroCustoDestino;
+        }
+        // EMPRESA E CENTRO DE CUSTO
+        elseif (count($dbCentroCustoEmpresa) > 0) {
+            $centroCustoDestino = GerencialCentroCusto::find($dbCentroCustoEmpresa[0]->idCentroCustoDestino);
+            $this->historicoGravaLancamento .= ' [TRANSFERÊNCIA ENTRE CENTROS DE CUSTO NA EMPRESA '.$empresaOrigem->nomeAlternativo.' DE '.
+                                                 $centroCustoOrigem->descricaoCentroCusto.
+                                                 ' PARA '.$centroCustoDestino->descricaoCentroCusto.']';
+            return $dbCentroCustoEmpresa[0]->idCentroCustoDestino;
+        }
+        // Retorna o centro de custo original se nenhuma configuração de transferência foi encontrada
         else                    return $codigoCentroCusto;
     }
 
+    /**
+     *  saldoInvertido
+     *  Verifica se a relação conta gerencial x conta contábil deve ter
+     *  o saldo registrado com valor invertido
+     * 
+     *  @param  Object      dadosLancamento 
+     * 
+     *  @return Boolean     TRUE: Inverter valor do saldo   | FALSE: não inverter valor do saldo
+     */
+    public function saldoInvertido(Object $dadosLancamento) 
+    {
+        $dbData = GerencialContaContabil::where('idContaGerencial', $dadosLancamento->idContaGerencial)
+                                        ->where('codigoContaContabilERP', $dadosLancamento->codigoContaContabil)
+                                        ->get();
+        
+        if (count($dbData) > 0 && $dbData[0]->saldoInvertido == 'S')    return TRUE;
+        else                                                            return FALSE;
+    }
 
     /**
      *  resultadoLiquido
@@ -818,4 +995,41 @@ class GerencialLancamento extends Model
     public function getLoteLancamento() {
         return GerencialLancamento::max('numeroLote');
     }
+
+    /**
+     *  razaoContabil
+     *  Retorna os lançamentos de uma conta contábil específica
+     * 
+     *  @param  object {mesLancamento, anoLancamento, codigoEmpresa, codigoCentroCusto, codigoConta}
+     * 
+     *  @return dbObject
+     */
+    public function razaoContabil($criterios) {
+
+        return  DB::select("SELECT	nomeEmpresa             = Empresa.Empresa_Nome,
+                                    idContaContabil         = PlanoConta.PlanoConta_ID,
+                                    descricaoContaContabil  = PlanoConta.PlanoConta_Descricao,
+                                    siglaCentroCusto        = G3_gerencialCentroCusto.siglaCentroCusto,
+                                    centroCusto             = CentroResultado.CentroResultado_Descricao,
+                                    codigoLancamento        = Lancamento.Lancamento_Codigo,
+                                    dataLancamento          = CONVERT(varchar, Lancamento.Lancamento_Data, 103),
+                                    documentoLancamento     = Lancamento.Lancamento_Documento,
+                                    naturezaLancamento      = Lancamento.Lancamento_Natureza,
+                                    observacaoLancamento    = Lancamento.Lancamento_Observacao,
+                                    valorLancamento         = Lancamento.Lancamento_Valor * CASE WHEN Lancamento.Lancamento_Natureza = 'D' THEN -1 ELSE 1 END 
+                            FROM    GrupoRoma_DealernetWF..Lancamento			(nolock)
+                            JOIN	GrupoRoma_DealernetWF..Empresa			(nolock) ON Empresa.Empresa_Codigo							= Lancamento.Lancamento_EmpresaCod
+                            JOIN	GrupoRoma_DealernetWF..PlanoConta		(nolock) ON PlanoConta.PlanoConta_Codigo					= Lancamento.Lancamento_PlanoContaCod
+                            JOIN	GAMA..G3_gerencialEmpresas				(nolock) ON G3_gerencialEmpresas.codigoEmpresaERP			= Empresa.Empresa_Codigo
+                            JOIN	GAMA..G3_gerencialCentroCusto			(nolock) ON G3_gerencialCentroCusto.codigoCentroCustoERP	= Lancamento.Lancamento_CentroResultadoCod
+                            JOIN	GrupoRoma_DealernetWF..CentroResultado	(nolock) ON CentroResultado.CentroResultado_Codigo			= G3_gerencialCentroCusto.codigoCentroCustoERP
+
+                            WHERE	G3_gerencialEmpresas.id         			= ".$criterios->codigoEmpresa."
+                            AND		G3_gerencialCentroCusto.id					= ".$criterios->codigoCentroCusto."
+                            AND		Lancamento.Lancamento_PlanoContaCod			= ".$criterios->codigoConta."
+                            AND		MONTH(Lancamento.Lancamento_Data)			= ".$criterios->mesLancamento."
+                            AND		YEAR(Lancamento.Lancamento_Data)			= ".$criterios->anoLancamento."
+                            ORDER BY    dataLancamento");
+    }
+    
 }

@@ -13,7 +13,7 @@ $tablePrefix = DB::getTablePrefix();
                                                            ELSE types.name
                                                       END,
                                     /*  Identifica o nome da tabela de dados da chave estrangeira para gerar os dados para o select */
-                                    foreignTable    = ( SELECT SUBSTRING(TabelaFK.name,4,LEN(TabelaFK.name))
+                                    foreignTable    = ( SELECT CASE WHEN SUBSTRING(TabelaFK.name,1,3) <> '".$tablePrefix."' THEN TabelaFK.name ELSE SUBSTRING(TabelaFK.name,4,LEN(TabelaFK.name)) END
                                                         FROM sys.tables                 AS TabelaFK
                                                         JOIN sys.foreign_keys           AS FKey     ON FKey.referenced_object_id = TabelaFK.object_id
                                                         JOIN sys.foreign_key_columns    AS FKC      ON FKC.constraint_object_id = FKey.object_id
@@ -149,10 +149,13 @@ $tablePrefix = DB::getTablePrefix();
                     {{-- Editar -- }}
                     <button class="btn btn-success btn-sm" data-nav="{{route($routeName.'.edit', $data->id)}}" title="Editar"><span class="fa fa-edit"></span></button>
                     {{-- Excluir --}}
-                    @if (!isset($model->noDeleteID) || !in_array($data->id, $model->noDeleteID))
-                        <button class="btn btn-danger btn-sm" data-confirm="{{route($routeName.'.destroy', $data->id)}}" data-show="{{$dataInfo_del}}" data-redir="{{route($routeName.'.index')}}" title="Excluir"><span class="fa fa-trash-alt"></span></button>                        
+                    @if ($model->deleteAble ?? TRUE) 
+
+                        @if (!isset($model->noDeleteID) || !in_array($data->id, $model->noDeleteID))
+                            <button class="btn btn-danger btn-sm" data-confirm="{{route($routeName.'.destroy', $data->id)}}" data-show="{{$dataInfo_del}}" data-redir="{{route($routeName.'.index')}}" title="Excluir"><span class="fa fa-trash-alt"></span></button>                        
+                        @endif
+                        
                     @endif
-                    
                     </td>
                 </tr>
             @endforeach
@@ -167,4 +170,5 @@ $tablePrefix = DB::getTablePrefix();
 
 </div>
 
+</div>
 @endsection

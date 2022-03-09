@@ -22,6 +22,9 @@ class CreateGerencialUsuariosTable extends Migration
             $table->char('permissaoAtiva',1)->comment('Indica se as configurações para o usuário estão ativas, e consequentemente o acesso dele às consultas do gerencial');
             $table->unsignedBigInteger('idUsuario')->comment('Identificador [FK] do usuário');
             $table->foreign('idUsuario')->references('id')->on('users');
+
+            $table->char('tipoUsuarioGerencial', 3)->comment('Tipo de usuário do gerencial OPE: Operador | GST: Gestor');
+            
             $table->timestamps();
         });
     }

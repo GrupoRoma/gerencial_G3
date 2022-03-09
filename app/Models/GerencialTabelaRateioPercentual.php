@@ -43,7 +43,7 @@ class GerencialTabelaRateioPercentual extends Model
                     $this->updateOrCreate([ 'idTabela'      => $idTabela,
                                             'idEmpresa'     => $codigoEmpresa, 
                                             'idCentroCusto' => $codigoCentroCusto, 
-                                            'percentual'    => $percentual]);
+                                            'percentual'    => str_replace(',','.',$percentual)]);
                 }
             }
         }
@@ -87,7 +87,8 @@ class GerencialTabelaRateioPercentual extends Model
                         ->where('idCentroCusto', $idCentroCusto)
                         ->get();
         
-        return $dbData[0];
+        if (count($dbData) == 0)    return FALSE;
+        else                        return $dbData[0];
     }
 
 }

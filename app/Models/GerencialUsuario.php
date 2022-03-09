@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class GerencialUsuario extends Model
 {
@@ -14,6 +15,7 @@ class GerencialUsuario extends Model
 
     public $viewTitle       = 'Permissões de Usuário';
     public $columnList      = ['idUsuario',
+                                'tipoUsuarioGerencial',
                                 'empresasAcesso', 
                                 'centrosCustoAcesso', 
                                 'contaGerencialAcesso', 
@@ -21,6 +23,7 @@ class GerencialUsuario extends Model
                                 'permissaoAtiva'];
 
     public $columnAlias     = ['idUsuario'                  => 'Usuário',
+                                'tipoUsuarioGerencial'      => 'Tipo de Usuário',
                                 'empresasAcesso'            => 'Empresas com Acesso',
                                 'centrosCustoAcesso'        => 'Centros de Custo com Acesso',
                                 'contaGerencialAcesso'      => 'Contas Gerenciais com Acesso',
@@ -28,25 +31,35 @@ class GerencialUsuario extends Model
                                 'permissaoAtiva'            => 'Permissao de Acesso Ativa'];
 
     public $columnValue     = ['gerencialTVI'               => ['TVI' => '[TVI] Registro TVI', 'GER' => '[GER] Acesso ao Gerencial', 'AMB' => '[AMB] Registro de TVI e Acesso ao Gerencial'],
-                                'permissaoAtiva'            => ['S' => 'Sim', 'N' => 'Não']];
+                                'permissaoAtiva'            => ['S' => 'Sim', 'N' => 'Não'],
+                                'tipoUsuarioGerencial'      => ['OPE' => 'OPERADOR', 'GST' => 'GESTOR']];
 
     public $customType      = ['gerencialTVI'               => ['type'      => 'radio',
                                                                 'values'    => ['TVI' => '[TVI] Registro TVI', 'GER' => '[GER] Acesso ao Gerencial', 'AMB' => '[AMB] Registro de TVI e Acesso ao Gerencial']],
-                               'permissaoAtiva'             => ['type'      => 'radio',
-                                                                'values'    => ['S' => 'Sim', 'N' => 'Não']]
+                                'permissaoAtiva'            => ['type'      => 'radio',
+                                                                'values'    => ['S' => 'Sim', 'N' => 'Não']],
+                                'tipoUsuarioGerencial'      => ['type'      => 'radio',
+                                                                'values'    => ['OPE' => 'OPERADOR', 'GST' => 'GESTOR']]
                               ];
 
-/*    public $rules  = ['idGrupoConta'                => 'required', 
-                        'descricaoSubGrupoConta'    => 'required', 
-                        'baseMargemBruta'           => 'required', 
-                        'ordemExibicao'             => 'nullable', 
-                        'subGrupoAtivo'             => 'required'];
-                        */
+    public $rules           = ['idUsuario'              => 'required', 
+                                'tipoUsuarioGerencial'  => 'required', 
+                                'empresasAcesso'        => 'nullable', 
+                                'centrosCustoAcesso'    => 'nullable', 
+                                'contaGerencialAcesso'  => 'nullable',
+                                'gerencialTVI'          => 'nullable',
+                                'permissaoAtiva'        => 'required'];
 
-//    public $customForm      = ['centrosCustoAcesso', 'contaGerencialAcesso', 'empresasAcesso'];
+    public $rulesMessage    = [ 'idUsuario'             => 'Selecione o usuário',
+                                'tipoUsuarioGerencial'  => 'Selecione o tipo de usuário',
+                                'permissaoAtiva'        => 'Informe se a permissão está ativa ou não'
+                              ];
+
 
     public function fk_users($columnValueName = 'id') {
-        $fkData = User::orderBy('name')->get();
+        $fkData = DB::select("SELECT * FROM GAMA..users ORDER BY name");
+
+//        $fkData = User::orderBy('name')->get();
 
         $formValues = [];
         foreach($fkData as $row => $data) {
@@ -125,10 +138,37 @@ class GerencialUsuario extends Model
     }
 
     public function vd_users($id) {
-        $viewData = User::where('id', $id)->get();
+        $viewData   = DB::select("SELECT * FROM GAMA..users WHERE id = ".$id);
+
+        //$viewData = User::where('id', $id)->get();
 
         foreach ($viewData as $row => $data) {
             return $data->name;
         }
+    }
+
+    /**
+     * Carrega e define as permissões do usuário logado na sessão
+     * 
+     */
+    public function setUserPerms() 
+    {
+        $dbData     = GerencialUsuario::where('idUsuario', session('userID'))->get();
+
+        if (count($dbData) == 0) return FALSE;
+
+        foreach($dbData as $row => $userData) {
+            $sessionData    = [ '_GER_empresasAcesso'        => ($userData->tipoUsuarioGerencial !== 'OPE' ? explode(',', $userData->empresasAcesso) : ''),
+                                '_GER_centrosCustoAcesso'    => ($userData->tipoUsuarioGerencial !== 'OPE' ? explode(',', $userData->centrosCustoAcesso) : ''),
+                                '_GER_contaGerencialAcesso'  => ($userData->tipoUsuarioGerencial !== 'OPE' ? explode(',', $userData->contaGerencialAcesso) : ''),
+                                '_GER_tipoUsuarioGerencial'  => $userData->tipoUsuarioGerencial,
+                                '_GER_TVI'                   => $userData->gerencialTVI
+                              ];
+            session()->put($sessionData);
+        }
+
+        if (session('_GER_empresasAcesso') !== NULL)    return TRUE;
+        else                                            return FALSE;
+
     }
 }

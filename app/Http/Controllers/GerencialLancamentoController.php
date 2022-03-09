@@ -101,7 +101,28 @@ class GerencialLancamentoController extends Controller
             return response()->json($validate, 500);
         }
 
-        foreach ($this->model->columnList as $column) {
+        // Corrige o valor do lançamento de acordo com a
+        // natureza de crédito ou débito
+        $multiplicador = 1;
+        if ($request->creditoDebito == 'DEB' && $request->valorLancamento > 0 ||
+            $request->creditoDebito == 'CRD' && $request->valorLancamento < 0) {
+            $multiplicador = -1;
+        }
+
+//        if ($request->creditoDebito == 'DEB')  $multiplicador = -1;
+
+        $lancamentoAjuste[] = [ 'anoLancamento'         => $request->anoLancamento,
+                                'mesLancamento'         => $request->mesLancamento,
+                                'codigoContaContabil'   => $request->codigoContaContabil,
+                                'idEmpresa'             => $request->idEmpresa,
+                                'centroCusto'           => $request->centroCusto,
+                                'idContaGerencial'      => $request->idContaGerencial,
+                                'creditoDebito'         => $request->creditoDebito,
+                                'valorLancamento'       => $request->valorLancamento * $multiplicador,
+                                'idTipoLancamento'      => 6,       // [M] AJUSTES MANUAL
+                                'historicoLancamento'   => '[M - AJUSTE MANUAL] '.$request->historicoLancamento];
+
+/*        foreach ($this->model->columnList as $column) {
             $gerencialLancamento->$column = $request->$column;
         }
         // Tipo de Lancamento = 6 [M] Manual
@@ -116,9 +137,12 @@ class GerencialLancamentoController extends Controller
 
         $gerencialLancamento->save();
         $request->session()->flash('message', 'Dados gravados com sucesso!');
+*/
+
+        $this->lancamentoGerencial->gravaLancamento($lancamentoAjuste);
 
         //return view('crudView', ['tableData' => $this->tableData, 'model' => $this->model, 'tableName' => $this->tableName]);
-        redirect('lancamento.index');
+        return redirect()->route('lancamento.index');
     }
 
     /**
@@ -263,6 +287,7 @@ class GerencialLancamentoController extends Controller
         $countRow   = 0;
 
         while (($rowData = fgetcsv($csvHandle,0,';')) !== FALSE) {
+            $rowData = array_map('utf8_encode', $rowData);
 
             $rowError   = FALSE;
 

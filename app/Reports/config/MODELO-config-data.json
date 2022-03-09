@@ -2,6 +2,7 @@
   "thisFile": "lancamentosGerenciais-config-data",
   "thisAbout": "Configuração de exibição dos dados do relatório de lançamentos gerenciais",
   "reportConfigFile": "lancamentosGerenciais",
+  "reportBaseModel": "GerencialLancamento",
   "showToolBar": true,
   "dataDateFormat": "d/m/Y",
   "selectionData": [

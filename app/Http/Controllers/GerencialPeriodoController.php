@@ -83,7 +83,7 @@ class GerencialPeriodoController extends Controller
             $gerencialPeriodo->$column = $request->$column;
         }
 
-        $gerencialPeriodo->idUsuario = 1;
+        $gerencialPeriodo->idUsuario = session('userID');
         $gerencialPeriodo->save();
         $request->session()->flash('message', 'Dados gravados com sucesso!');
 
@@ -148,6 +148,9 @@ class GerencialPeriodoController extends Controller
         foreach ($this->model->columnList as $column) {
             $update->$column = $request->$column;
         }
+
+        // Usuário que alterou
+        $update->idUsuario  = session('userID');
 
         $update->save();
         $request->session()->flash('message', 'Dados atualizados com sucesso!');

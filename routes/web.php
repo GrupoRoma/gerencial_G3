@@ -1,8 +1,13 @@
 <?php
 
+use App\Http\Controllers\GerencialUsuarioController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+use Illuminate\Support\Facades\Auth;
+
 use App\Models\GerencialPeriodo;
+use App\Models\GerencialUsuario;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,11 +20,40 @@ use App\Models\GerencialPeriodo;
 |
 */
 
-Route::get('/', function () {
+//Auth::routes();
+
+Route::get('/', function (Request $request) {
+    // Identifica o período ativo
     $periodoAtivo   = GerencialPeriodo::where('periodoAtivo', 'S')
-                                      ->where('periodoSituacao', 'AB')
-                                      ->get();
-    return view('home', ['periodoAtivo' => $periodoAtivo[0]]);
+                                        ->where('periodoSituacao', 'AB')
+                                        ->get();
+
+    // Verifica sessão na URL
+    $sessionShared  = json_decode(base64_decode(key($request->query()))) ?? session()->all();
+
+    if (!isset($sessionShared->loged) || !$sessionShared->loged) {
+        return redirect('http://129.12.69.233/ROMA');
+    }
+    else {
+        session()->put(['userID'            => $sessionShared->userID, 
+                        'loged'             => $sessionShared->loged,
+                        'nome'              => $sessionShared->nome,
+                        'email'             => $sessionShared->email, 
+                        'adminUser'         => $sessionShared->adminUser,
+                        'securityUser'      => $sessionShared->securityUser,
+                        'empresaOrigemID'   => $sessionShared->empresaOrigemID,
+                        'empresaOrigemNome' => $sessionShared->empresaOrigemNome,
+                        '_GER_periodoAtivo' => $periodoAtivo[0]->periodoMes.'/'.$periodoAtivo[0]->periodoAno,
+                        '_GER_periodoMes'   => $periodoAtivo[0]->periodoMes,
+                        '_GER_periodoAno'   => $periodoAtivo[0]->periodoAno
+                       ]);
+    }
+
+    //return redirect('public/registraLogin');
+    //return redirect()->action([GerencialUsuarioController::class, 'registraLogin'] );
+
+    return view('home', ['periodoAtivo' => $periodoAtivo[0] ?? NULL]);
+   
 });
 
 //Route::get('/home', 'HomeController@index')->name('home');
@@ -71,18 +105,21 @@ Route::any('processarImportacao',  'App\Http\Controllers\Processos\ImportarConta
 
 
 /******* PROCESSAMENTOS *******/
-Route::get('processarRateios', 'App\Http\Controllers\Processos\ParametroRateioController@index')->name('processarRateios');
-Route::get('processarParametros', 'App\Http\Controllers\Processos\ParametroRateioController@processarParametros')->name('processarParametros');
-Route::get('rateioLogistica', 'App\Http\Controllers\Processos\ParametroRateioController@indexLogistica')->name('rateioLogistica');
-Route::get('processarRateioLogistica', 'App\Http\Controllers\Processos\ParametroRateioController@rateioLogistica')->name('processarRateioLogistica');
+Route::get('processarRateios',          'App\Http\Controllers\Processos\ParametroRateioController@index')->name('processarRateios');
+Route::get('processarParametros',       'App\Http\Controllers\Processos\ParametroRateioController@processarParametros')->name('processarParametros');
+Route::get('rateioLogistica',           'App\Http\Controllers\Processos\ParametroRateioController@indexLogistica')->name('rateioLogistica');
+Route::get('processarRateioLogistica',  'App\Http\Controllers\Processos\ParametroRateioController@rateioLogistica')->name('processarRateioLogistica');
+Route::get('lancamentoTVI',             'App\Http\Controllers\Processos\TVIController@lancamentosTVI')->name('lancamentoTVI');
+Route::get('registraTVI',               'App\Http\Controllers\Processos\TVIController@registraTVI')->name('registraTVI');
 
 /******* RELATÓRIO GERENCIAL *******/
 Route::any('relatorioGerencial',        'App\Http\Controllers\Relatorios\RelatorioGerencialController@index')->name('relatorioGerencial');
 Route::any('relatorioGerencial_build', 'App\Http\Controllers\Relatorios\RelatorioGerencialController@build')->name('relatorioGerencial_build');
 Route::any('relatorioGerencial_show',   'App\Http\Controllers\Relatorios\RelatorioGerencialController@generateReport')->name('relatorioGerencial_show');
 Route::any('detalheConta',             'App\Http\Controllers\Relatorios\RelatorioGerencialController@detalhamentoContaGerencial')->name('detalheConta');
+Route::any('gerencialRazao',           'App\Http\Controllers\Relatorios\RelatorioGerencialController@gerencialRazaoContabil')->name('gerencialRazao');
 
-Route::any('relatorioLancamentos',              'App\Http\Controllers\Relatorios\RelatoriosGerenciais@lancamentosGerenciais')->name('relatorioLancamentos');
+Route::any('relatorioLancamentos',      'App\Http\Controllers\Relatorios\RelatoriosGerenciais@lancamentosGerenciais')->name('relatorioLancamentos');
 
 Route::prefix('relatorio')->group(function() {
     Route::any('/Empresas','App\Http\Controllers\Relatorios\RelatoriosGerenciais@cadastro')->name('gerencialEmpresas');
@@ -97,7 +134,11 @@ Route::prefix('relatorio')->group(function() {
     Route::any('/ParametroRateio','App\Http\Controllers\Relatorios\RelatoriosGerenciais@cadastro')->name('gerencialParametroRateio');
 });
 
-
+Route::prefix('relatoriosDiversos')->group(function() {
+    Route::any('/reportArquviosCSV',    'App\Http\Controllers\Relatorios\RelatoriosGerenciais@generalReports')->name('reportArquivosCSV');
+    Route::any('/reportTVI',            'App\Http\Controllers\Relatorios\RelatoriosGerenciais@generalReports')->name('reportTVI');
+    Route::any('/reportContaContabil',  'App\Http\Controllers\Relatorios\RelatoriosGerenciais@generalReports')->name('reportContaContabil');
+});
 
 /******* UTILITÁRIOS *******/
 Route::get('importarParametros','App\Http\Controllers\Utils\UtilsController@importarParametros')->name('importarParametros');
@@ -105,6 +146,8 @@ Route::any('csvExport',         'App\Http\Controllers\Utils\UtilsController@csvE
 Route::get('formError',         'App\Http\Controllers\Utils\UtilsController@formError')->name('formError');
 Route::get('filialDP',          'App\Http\Controllers\Utils\UtilsController@filialDP')->name('filialDP');
 
-//Auth::routes();
+
+Route::get('registraLogin',     'App\Http\Controllers\GerencialUsuarioController@registraLogin')->name('registraLogin');
+Route::get('logout',            'App\Http\Controllers\GerencialUsuarioController@logout')->name('logout');
 
 

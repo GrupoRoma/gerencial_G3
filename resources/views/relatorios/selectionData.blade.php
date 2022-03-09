@@ -80,22 +80,29 @@
         
                                         @switch($formField->formType)
                                             @case("period")
-                                                <div class="form-inline">
-                                                    <input class="form-control" type="date" name="{{$formField->columnName}}[]" id="periodStart" placeholder="Data inicial" value="">
-                                                    <input class="form-control ml-2" type="date" name="{{$formField->columnName}}[]" id="periodEnd" placeholder="Data Final" value="{{date('d/m/Y')}}">
-                                                </div>
+                                                @if ($formField->columnName == 'periodoGerencial')
+                                                    <div class="form-inline">
+                                                        <input class="form-control" type="text" name="{{$formField->columnName}}[]" id="periodoStart" placeholder="99/9999)" value="{{session('_GER_periodoAtivo')}}">
+                                                        <input class="form-control ml-2" type="text" name="{{$formField->columnName}}[]" id="periodoEnd" placeholder="99/9999" value="{{session('_GER_periodoAtivo')}}">
+                                                    </div>
+                                                @else
+                                                    <div class="form-inline">
+                                                        <input class="form-control" type="date" name="{{$formField->columnName}}[]" id="periodStart" placeholder="Data inicial" value="">
+                                                        <input class="form-control ml-2" type="date" name="{{$formField->columnName}}[]" id="periodEnd" placeholder="Data Final" value="{{date('d/m/Y')}}">
+                                                    </div>
+                                                @endif
                                                 @break
-                                            @case("periodoGerencial")
+{{--                                             @case("periodoGerencial")
                                                 <div class="form-inline">
                                                     <input class="form-control" type="text" name="{{$formField->columnName}}[]" id="periodoStart" placeholder="99/9999)" value="{{date('m/Y')}}">
                                                     <input class="form-control ml-2" type="text" name="{{$formField->columnName}}[]" id="periodoEnd" placeholder="99/9999" value="{{date('m/Y')}}">
                                                 </div>
-                                                @break
+                                                @break --}}
                                             @case("date")
                                                 <input class="form-control" type="date" name="{{$formField->columnName}}" id="{{$formField->columnName}}" placeholder="{{$formField->label}}" value="{{date('d/m/Y')}}">
                                                 @break
                                             @case("text")
-                                                <input class="form-control" type="text" name="{{$formField->columnName}}" id="{{$formField->columnName}}" placeholder="{{$formField->label}}" value="{{date('d/m/Y')}}">
+                                                <input class="form-control" type="text" name="{{$formField->columnName}}" id="{{$formField->columnName}}" placeholder="{{$formField->label}}" value="">
                                                 @break;
                                             @case("foreignKey")
                                                 @if (isset($columnMeta[$formField->columnName]->foreignTable) && 

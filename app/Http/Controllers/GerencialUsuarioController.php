@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\GerencialUsuario;
+use App\Models\GerencialPeriodo;
+
 use Illuminate\Http\Request;
 
 class GerencialUsuarioController extends Controller
@@ -62,7 +64,8 @@ class GerencialUsuarioController extends Controller
                 case 'empresasAcesso':
                 case 'centrosCustoAcesso':
                 case 'contaGerencialAcesso':
-                    $request->$column = implode(',', $request->$column);
+                    if (!empty($request->$column))  $request->$column   = implode(',', $request->$column);
+                    else                            $request->$column   = NULL;
                     break;
             }
             $gerencialUsuario->$column = $request->$column;
@@ -126,7 +129,8 @@ class GerencialUsuarioController extends Controller
                 case 'empresasAcesso':
                 case 'centrosCustoAcesso':
                 case 'contaGerencialAcesso':
-                    $request->$column = implode(',', $request->$column);
+                    if (!empty($request->$column))  $request->$column   = implode(',', $request->$column);
+                    else                            $request->$column   = NULL;
                     break;
             }
             $update->$column = $request->$column;
@@ -153,5 +157,36 @@ class GerencialUsuarioController extends Controller
         $this->tableData  = GerencialUsuario::orderby('descricaoParametro')->get();
         
         return view('crudView', ['tableData' => $this->tableData, 'model' => $this->model, 'tableName' => $this->tableName]);
+    }
+
+
+    /**
+     *  registraLogin
+     *  registra os dados de login na sessão e retorna para a tela inicial do gerencial
+     */
+    public function registraLogin()
+    {
+        if (!$this->model->setUserPerms()) {
+            return ("<span id='showMsg' data-title='USUÁRIO NÃO CADASTRADO'
+                            data-message='O usuário ".session('nome').", não possui permissões definidas para acesso o Gerencial.'></span>");
+        }
+    }
+
+    /**
+     *  Efetua o logout do usuário e retorna para a página de login / ROMA APPS
+     * 
+     *  @param  Boolean     $redir  | FALSE (Não redireciona para a página inicial)
+     * 
+     */
+    public function logout(Bool $redir = FALSE)
+    {
+        // Destroy a sessão
+        session()->flush();
+
+        if ($redir) return redirect(env('APP_URL'));
+        else        return response(true);
+        
+        // Recarrega a página
+        // return redirect(env('APP_URL'));
     }
 }

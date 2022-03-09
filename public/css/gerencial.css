@@ -31,6 +31,9 @@
     overflow-x: auto;
 }
 
+#logout         { cursor: pointer; }
+#logout:hover   { transform: scale(1.5);}
+
 .full-height {
     top: 0;
     left: 0;
@@ -86,6 +89,10 @@
     color: white;
     background-color: orangered;
 }
+.bg-gray {
+    color: black;
+    background-color: rgb(187,187,187);
+}
 
 .bg-orange a, .bg-orange a:link {
     text-decoration: none;
@@ -106,7 +113,7 @@
     background-color: rgb(255, 130, 58);
 }
 
-label, [data-nav] { cursor: pointer; }
+label, [data-nav], [data-razao] { cursor: pointer; }
 
 .filtro-relatorio {
     max-width: 90%;

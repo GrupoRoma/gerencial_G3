@@ -33,7 +33,7 @@
                 {{-- Token --}}
                 @csrf
 
-                <input class="form-control" type="text" name="periodo" id="periodo" maxlength="7" placeholder="Período MM/YYYY" value="{{$mesAno->MESANO}}">
+                <input class="form-control" type="text" name="periodo" id="periodo" maxlength="7" placeholder="Período MM/YYYY" value="{{session('_GER_periodoAtivo')}}">
 
                 <div class="form-group row pt-2">
                         <div class="col-sm-2 col-form-label">LAYOUT</div>

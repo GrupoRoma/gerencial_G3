@@ -4,7 +4,6 @@
 @endif
 
 
-
 <div id="report-area">
         <div class="container-fluid">
                 <!--// REPORT HEADER -->
@@ -19,7 +18,7 @@
                                 </div>
                                 <div class="col-sm12-col-xs-6 col-sm-6 text-center">
                                         <h3>{{$configLoaded->reportHeader->title}} - {{$configReport->periodo}}</h3>
-                                        <h5>{{$configLoaded->reportHeader->subTitle}}</h5>
+                                        <h5>{{$configLoaded->reportHeader->subTitle}} | {{$layout}}</h5>
                                 </div>
                                 <div class="col-sm12-col-xs-3 col-sm-3 text-right">
                                         @if ($configLoaded->reportHeader->showDateTime)
@@ -84,9 +83,19 @@
                                                         <!--// CÓDIGO E DESCRICAO DA CONTA -->
                                                         @foreach ($dataCodigo as $codigoConta => $dataConta)
                                                                 <!--//Linha de dados//-->
-                                                                @php    $totalLinha    = 0;    @endphp
-                                                                
-                                                                <tr class="row-data {{isset($infoConta[rtrim($codigoConta)]) ? 'moreinfo' : ''}}" data-explode="{{$dataConta['jsonData']}}">    <!-- Código e Descrição da Conta -->
+                                                                @php    
+                                                                        $totalLinha    = 0;
+                                                                        $jsonData      = json_decode($dataConta['jsonData'])
+                                                                @endphp
+
+                                                                <tr class="row-data {{isset($infoConta[rtrim($codigoConta)]) ? 'moreinfo' : ''}}" 
+                                                                        {{-- Habilita o click para detalhamento dos valores --}}
+                                                                        @if ($tipoAnalise == 'V')
+                                                                                data-explode="{{$dataConta['jsonData']}}"     
+                                                                        @endif
+                                                                        
+                                                                        data-regional='{"regional": {{$layout == 'layoutRegional' ? 1 : 0}}, "codigoRegional": {{$jsonData->codigoRegional}}}'>    <!-- Código e Descrição da Conta -->
+                                                                        
                                                                         <td class="account" data-toggle="tooltip"
                                                                                         data-placement="left"
                                                                                         data-html="true"
@@ -111,19 +120,24 @@
                                                                                 </td>
                                                                         @endforeach
                                                                 @else
-                                                                        <!--// ANÁLISE HORIZONTA (CENTRO DE CUSTO x EMPRESA) -->
+                                                                        <!--// ANÁLISE HORIZONTAL (CENTRO DE CUSTO x EMPRESA) -->
                                                                         @foreach ($empresas as $empresa)
+                                                                                @php
+                                                                                    $valoresHorizontal = $reportData['layoutEmpresa'][$chaveRelatorio][$subGrupo][$grupo][$codigoConta];
+                                                                                @endphp
+
                                                                                 <td class="values">
-                                                                                        @if (isset($dataConta[$empresa->nomeAlternativo]))
-                                                                                                {{number_format($dataConta[$empresa->nomeAlternativo], $decimals,',','.')}}
-                                                                
+                                                                                        @if (isset($valoresHorizontal[$empresa->nomeAlternativo]))
+                                                                                                {{number_format($valoresHorizontal[$empresa->nomeAlternativo], $decimals,',','.')}}
+                                                                                                {{-- {{number_format($dataConta[$empresa->nomeAlternativo], $decimals,',','.')}} --}}
+
                                                                                                 @php
                                                                                                 // ACUMULA OS TOTAIS
-                                                                                                $totaisSubGrupo[$empresa->nomeAlternativo]      += $dataConta[$empresa->nomeAlternativo];
-                                                                                                $totaisGrupo[$empresa->nomeAlternativo]         += $dataConta[$empresa->nomeAlternativo];
-                                                                                                $totaisEmpresa[$empresa->nomeAlternativo]       += $dataConta[$empresa->nomeAlternativo];
+                                                                                                $totaisSubGrupo[$empresa->nomeAlternativo]      += $valoresHorizontal[$empresa->nomeAlternativo];
+                                                                                                $totaisGrupo[$empresa->nomeAlternativo]         += $valoresHorizontal[$empresa->nomeAlternativo];
+                                                                                                $totaisEmpresa[$empresa->nomeAlternativo]       += $valoresHorizontal[$empresa->nomeAlternativo];
 
-                                                                                                $totalLinha                                 += $dataConta[$empresa->nomeAlternativo];
+                                                                                                $totalLinha                                 += $valoresHorizontal[$empresa->nomeAlternativo];
                                                                                                 @endphp
                                                                                         @endif
                                                                                 </td>

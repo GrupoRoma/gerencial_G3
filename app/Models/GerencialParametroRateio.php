@@ -23,6 +23,7 @@ class GerencialParametroRateio extends Model
                                 'codigoCentroCustoDestino',
                                 'historicoPadrao',
                                 'formaAplicacao',
+                                'idTabelaRateio',
                                 'parametroAtivo'];
 
     public $columnsGrid     = ['descricaoParametro', 
@@ -37,6 +38,7 @@ class GerencialParametroRateio extends Model
     public $columnAlias     = ['descricaoParametro'             => 'Descrição', 
                                 'idBaseCalculo'                 => 'Base de Cálculo',
                                 'idTipoLancamento'              => 'Tipo de Lancamento', 
+                                'idTabelaRateio'                => 'Tab. Referência',
                                 'codigoContaGerencialOrigem'    => 'Conta Gerencial [ORIGEM]', 
                                 'codigoContaGerencialDestino'   => 'Conta Gerencial [DESTINO]', 
                                 'codigoEmpresaOrigem'           => 'Empresa [ORIGEM]',
@@ -58,7 +60,7 @@ class GerencialParametroRateio extends Model
     public $rules  = ['descricaoParametro'              => 'required', 
                         'idBaseCalculo'                 => 'required_if:formaAplicacao,PESO', 
                         'idTipoLancamento'              => 'required', 
-                        'codigoContaGerencialOrigem'    => 'required', 
+                        'codigoContaGerencialOrigem'    => 'nullable', 
                         'codigoContaGerencialDestino'   => 'required', 
                         'codigoEmpresaOrigem'           => 'required', 
                         'codigoEmpresaDestino'          => 'required',
@@ -72,7 +74,7 @@ class GerencialParametroRateio extends Model
     public $rulesMessage    = [ 'descricaoParametro'            => 'DESCRIÇÃO: Obrigatório',
                                 'idBaseCalculo'                 => 'BASE DE CÁLCULO: Obrigatório se a Forma de Aplicação = PESO EM RELAÇÃO À BASE DE CÁLCULO',
                                 'idTipoLancamento'              => 'TIPO DE LANÇAMENTO: Obrigatório',
-                                'codigoContaGerencialOrigem'    => 'CONTA GERENCIAL DE ORIGEM: Obrigatório',
+//                                'codigoContaGerencialOrigem'    => 'CONTA GERENCIAL DE ORIGEM: Obrigatório',
                                 'codigoContaGerencialDestino'   => 'CONTA GERENCIAL DE DESTINO: Obrigatório',
                                 'codigoEmpresaOrigem'           => 'EMPRESA DE ORIGEM: Obrigatório',
                                 'codigoEmpresaDestino'          => 'EMPRESA DE DESTINO: Obrigatório',
@@ -378,10 +380,16 @@ class GerencialParametroRateio extends Model
      * 
      *  @return object
      */
-    public function valorOrigem($mes, $ano, $codigoEmpresa, $codigoContaGerencial, $codigoCentroCusto) {
+    public function valorOrigem($mes, $ano, $codigoEmpresa, $codigoCentroCusto, $codigoContaGerencial = NULL) {
         $codigoEmpresa          = str_replace(',',"','", $codigoEmpresa);
         $codigoContaGerencial   = str_replace(',',"','", $codigoContaGerencial);
         $codigoCentroCusto      = str_replace(',',"','", $codigoCentroCusto);
+
+        $queryCondition = '';
+        if (!empty($codigoContaGerencial)) {
+            $queryCondition = "AND   G3_gerencialLancamentos.idContaGerencial    IN ('".$codigoContaGerencial."')";
+        }
+
 
         $valorOrigem = DB::select("SELECT	G3_gerencialLancamentos.idEmpresa,
                                             G3_gerencialLancamentos.centroCusto,
@@ -393,7 +401,9 @@ class GerencialParametroRateio extends Model
                                   WHERE G3_gerencialLancamentos.mesLancamento	    = '".$mes."'
                                   AND   G3_gerencialLancamentos.anoLancamento	    = '".$ano."'
                                   AND   G3_gerencialLancamentos.idEmpresa	        IN ('".$codigoEmpresa."')
-                                  AND   G3_gerencialLancamentos.idContaGerencial    IN ('".$codigoContaGerencial."')
+                                  
+                                  ".$queryCondition."
+
                                   AND   G3_gerencialLancamentos.centroCusto         IN ('".$codigoCentroCusto."')
                                   AND   G3_gerencialEmpresas.empresaAtiva           = 'S'
                                   AND   G3_gerencialCentroCusto.centroCustoAtivo    = 'S'
@@ -403,4 +413,31 @@ class GerencialParametroRateio extends Model
         return $valorOrigem;
     }
 
+
+    public function getParametroTabela()
+    {
+        return DB::select("SELECT	codigoTabela			= G3_gerencialTabelaRateios.id,
+                            		descricaoTabela			= G3_gerencialTabelaRateios.descricao,
+                                    origemEmpresa			= G3_gerencialParametroRateio.codigoEmpresaOrigem,
+                                    origemContaGerencial	= G3_gerencialParametroRateio.codigoContaGerencialOrigem,
+                                    origemCentroCusto		= G3_gerencialParametroRateio.codigoCentroCustoOrigem,
+
+                                    destinoEmpresa			= G3_gerencialParametroRateio.codigoEmpresaDestino,
+                                    destinoContaGerencial	= G3_gerencialParametroRateio.codigoContaGerencialDestino,
+                                    destinoCentroCusto		= G3_gerencialParametroRateio.codigoCentroCustoDestino,
+
+                                    percentualEmpresa		= G3_gerencialTabelaRateioPercentual.idEmpresa,
+                                    percentualCentroCusto	= G3_gerencialTabelaRateioPercentual.idCentroCusto,
+                                    percentualRateio		= G3_gerencialTabelaRateioPercentual.percentual
+
+                            FROM	GAMA..G3_gerencialParametroRateio			(nolock)
+                            JOIN	GAMA..G3_gerencialTabelaRateios				(nolock) ON G3_gerencialTabelaRateios.id						= G3_gerencialParametroRateio.idTabelaRateio
+                            JOIN	GAMA..G3_gerencialTabelaRateioPercentual	(nolock) ON G3_gerencialTabelaRateioPercentual.idTabela			= G3_gerencialTabelaRateios.id
+                                                                                        AND convert(varchar,G3_gerencialTabelaRateioPercentual.idEmpresa)		IN (G3_gerencialParametroRateio.codigoEmpresaDestino)
+                                                                                        AND convert(varchar,G3_gerencialTabelaRateioPercentual.idCentroCusto)	IN (G3_gerencialParametroRateio.codigoCentroCustoDestino)
+                            WHERE formaAplicacao = 'TBLA' 
+                            and parametroAtivo = 'S'
+
+                            ORDER BY G3_gerencialParametroRateio.descricaoParametro");
+    }
 }

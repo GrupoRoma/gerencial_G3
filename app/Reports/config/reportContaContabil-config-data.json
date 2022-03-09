@@ -1,0 +1,37 @@
+{
+        "thisFile": "reportContaContabil-config-data",
+        "thisAbout": "Configuração de exibição dos dados do relatório de Contas Contábeis - DMS",
+        "reportConfigFile": "reportContaContabil",
+        "reportBaseModel": "GerencialContaContabil",
+        "showToolBar": true,
+        "dataDateFormat": "d/m/Y",
+        "selectionData": [],
+      
+        "columnsHide": [],
+        "columnsCustomHeader": {"PlanoConta_Codigo": "Código DMS",
+                                "PlanoConta_ID": "Núm. Conta",
+                                "PlanoConta_Descricao": "Conta Contábil",
+                                "PlanoConta_Natureza": "Créd / Déb"},
+        "columnsCustom": [],
+        "columnsWrap": true,        
+        "columnsFormat": [],
+        "columnDb-calc": [],
+        "columnGroup": {},
+        "columnCalculate": {},
+        "columnTotals": [],
+        "totals": {"row": "true",
+                   "column": "true",
+                   "group": "true",
+                   "global": "true"},
+        "callbackRow": "",
+        "callbackColumn": {},
+        "customQuery": true,
+        "columnDataBaseValue":  [],
+        "customData": { "table": "GrupoRoma_DealernetWF..PlanoConta",
+                        "order": "NumeroConta",
+                        "columns": [ "CodigoConta = PlanoConta_Codigo, NumeroConta = PlanoConta_ID, DescricaoConta = PlanoConta_Descricao"],
+                        "join":   [],
+                        "filter": []
+                      }
+        
+      }

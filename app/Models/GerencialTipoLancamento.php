@@ -10,7 +10,11 @@ class GerencialTipoLancamento extends Model
     protected $table    = 'gerencialTipoLancamento';
     protected $guarded  = ['id'];
 
-    public   $noDeleteID = [1,2,3,4,5,6,7,8,9,10,11,14];
+    // Determina que os registros da tabela não podem ser excluídos pelo CRUD
+    public  $deleteAble  = FALSE;
+    
+    // Identifica os ID's que não podem ser deletados
+    //public  $noDeleteID = [1,2,3,4,5,6,7,8,9,10,11,14];
 
     public $viewTitle       = 'Tipos de Lançamento';
     public $columnList      = ['descricaoTipoLancamento', 

@@ -24,6 +24,9 @@ class Rateios extends Model
         $dataInicial    = date('Y-m-d H:i:s', mktime(0,0,0,$mes,1,$ano));
         $dataFinal      = date('Y-m-t H:i:s', mktime(23,59,59,$mes,1,$ano));
 
+        // REMOVE A TABELA TEMPORÁRIA CASO ELA JÁ EXISTA
+        $dropTable   = DB::insert( DB::raw("DROP VIEW IF EXISTS V_TMPVENDAS"));
+
         // Cria uma VIEW TEMPORÁRIA COM OS DADOS DAS VENDAS
         $dbView     = DB::insert(DB::raw("CREATE VIEW V_TMPVENDAS AS 
                                             SELECT	codigoEmpresa	= COALESCE( -- 1. Empresa da Proposta se o vendedor for de regional diferente (ex: FIAT vendendo FORD)
@@ -284,8 +287,8 @@ class Rateios extends Model
                                     FROM V_TMPVENDAS
                                     GROUP BY codigoEmpresa, estoque");
 
-        // Cria a tabela temporária com a empresa dos funcionários cadastrados no DP
-        $dropTable   = DB::insert( DB::raw("DROP VIEW IF EXISTS V_TMPVENDAS"));
+        // REMOVE A TABELA TEMPORÁRIA
+        $dropTable   = DB::insert( DB::raw("DROP VIEW V_TMPVENDAS"));
 
         return $dbData;
     }

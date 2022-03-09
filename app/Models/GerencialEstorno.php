@@ -85,6 +85,22 @@ class GerencialEstorno extends Model
         return $listData;
     }
 
+    public function vd_codigoSubContaERP($values) {
+        $listData = '';
+        if (!empty($values)) {
+            $viewData   = DB::select("SELECT SubConta.SubConta_Codigo, SubConta.SubConta_ID, SubConta.SubConta_Descricao 
+                                    FROM   GrupoRoma_DealernetWF..SubConta
+                                    WHERE  SubConta.Estrutura_Codigo = '5'
+                                    AND    SubConta.SubConta_Codigo in ($values)
+                                    ORDER BY SubConta.SubConta_ID");
+
+            foreach ($viewData as $row => $data) {
+                $listData .= (!empty($listData) ? '<br>' : '').$data->SubConta_ID.' - '.$data->SubConta_Descricao;
+            }
+        }
+        return $listData;
+    }
+
     public function fk_gerencialContaGerencial($columnValueName = 'id') {
         $fkData = GerencialContaGerencial::orderBy('codigoContaGerencial')->get();
 
@@ -107,7 +123,17 @@ class GerencialEstorno extends Model
         return ['options' => $formValues, 'type' => '']; 
     }
 
-
+    /**
+     *  custom form
+     *  codigoContaContabil
+     * 
+     *  Retorna o código do formulário HTML para a coluna codigoContaContabil
+     * 
+     *  @param  mixed   values  : NULL
+     *  @param  boolean multi   : Multiple selecte | FALSE
+     * 
+     *  @return string  HTML
+     */
     public function custom_codigoContaContabil($values = NULL, $multi = FALSE) {
         $empresaERP = DB::select("SELECT PlanoConta.PlanoConta_Codigo, PlanoConta.PlanoConta_ID, PlanoConta.PlanoConta_Descricao 
                                   FROM   GrupoRoma_DealernetWF..PlanoConta
@@ -130,4 +156,35 @@ class GerencialEstorno extends Model
         return $htmlForm.($multi ? "<small class='form-text text-muted'><b>CTRL+Click</b> para selecionar mais de uma opção</small>" : "");
     }
 
+    /**
+     *  custom form
+     *  codigoSubContaERP
+     * 
+     *  Retorna o código do formulário HTML para a coluna codigoSubContaERP
+     * 
+     *  @param  mixed   values  : NULL
+     *  @param  boolean multi   : Multiple selecte | FALSE
+     * 
+     *  @return string  HTML
+     */
+    public function custom_codigoSubContaERP($values = NULL, $multi = FALSE) {
+        $empresaERP = DB::select("SELECT codigoSubConta     = SubConta.SubConta_Codigo,
+                                         idSubConta         = SubConta.SubConta_ID,
+                                         descricaoSubConta  = SubConta.SubConta_Descricao
+                                  FROM   GrupoRoma_DealernetWF..SubConta
+                                  WHERE  SubConta.Estrutura_Codigo = '5'
+                                  AND    SubConta.TipoSubConta_Codigo not in(1,3)
+                                  ORDER BY descricaoSubConta");
+
+        $htmlForm = "<select class='form-control' name='codigoSubContaERP".($multi ? '[]\' multiple' : '\'')." id='codigoSubContaERP'>";
+        if (!$multi) $htmlForm .= "<option value=''> --- </option>";
+
+        $values = explode(',', $values);
+        foreach ($empresaERP as $row => $data) {
+            $htmlForm .= "<option value='".$data->codigoSubConta."' ".(in_array($data->codigoSubConta, $values) ? 'selected' : '').">".$data->descricaoSubConta." [".$data->idSubConta."]</option>";
+        }
+        $htmlForm .= "</select>";
+
+        return $htmlForm.($multi ? "<small class='form-text text-muted'><b>CTRL+Click</b> para selecionar mais de uma opção</small>" : "");
+    }
 }

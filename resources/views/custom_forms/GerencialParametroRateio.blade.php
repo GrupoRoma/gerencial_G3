@@ -130,7 +130,10 @@ if (isset($tableData->descricaoParametro)) {
                                         $formOptions = $model->fk_gerencialTabelaRateio('id');
                                 @endphp
 
-                                <select name="idTabelaRateio" id="idTabelaRateio" class="form-control @error('idTabelaRateio') form-validate @enderror" disabled>
+                                <select name="idTabelaRateio" 
+                                        id="idTabelaRateio" 
+                                        class="form-control @error('idTabelaRateio') form-validate @enderror"
+                                        {{(empty($values['idTabelaRateio']) ? 'disabled' : '')}}>
                                         <option value=""></option>
                                         @foreach ( $formOptions['options'] as $key => $options)
                                                 <option value="{{$options[0]}}"

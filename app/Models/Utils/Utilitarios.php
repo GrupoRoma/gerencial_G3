@@ -62,4 +62,78 @@ class Utilitarios extends Model
 
         return $validate;
     }
+
+    /**
+     *  Identifica todas as opções cadastradas para o usuário logado
+     *  Se o usuário for do tipo OPE (Operador), ele terá acesso a todas as opções
+     *  Se o usuário for do tipo GST (Gestor), ele terá acesso apenas às opções cadastradas no ROMA APPS
+     * 
+     *  APP 14 =  Gerencial
+     * 
+     *  @param  session     userID
+     *  
+     *  @return Array       menu struct
+     * 
+     */
+    public function getMenuOptions()
+    {
+        $profileRoutes  = '';
+        $userRoutes     = '';
+        $whereUser      = '';
+        if (session('_GER_tipoUsuarioGerencial') != 'OPE') {
+            $profileRoutes  = " JOIN	GAMA..GRA_userApps			(nolock) ON GRA_userApps.idApp			= GRA_appsRoutes.idApp
+                                JOIN	GAMA..GRA_userProfiles		(nolock) ON GRA_userProfiles.idUser		= GRA_userApps.idUser
+                                JOIN	GAMA..GRA_profileRoutes		(nolock) ON GRA_profileRoutes.idRoute	= GRA_appsRoutes.id";
+
+            $userRoutes     = " JOIN	GAMA..GRA_userApps			(nolock) ON GRA_userApps.idApp			= GRA_appsRoutes.idApp
+                                JOIN	GAMA..GRA_userRoutes		(nolock) ON GRA_userRoutes.idUser		= GRA_userApps.idUser";
+
+            $whereUser      = "AND		GRA_userApps.idUser			= ".session('userID');
+        }
+        
+        $dbData     = DB::select("  -- PROFILES
+                                    SELECT GRA_appsRoutes.*
+                                    FROM gama..GRA_appsRoutes			(nolock)
+
+                                    ".$profileRoutes."
+
+                                    WHERE	GRA_appsRoutes.idApp		= 14
+                                    AND		GRA_appsRoutes.routeActive	= 1
+                                    
+                                    ".$whereUser."
+                                    
+                                    UNION 
+                                    
+                                    -- USER ROUTES
+                                    SELECT GRA_appsRoutes.*
+                                    FROM gama..GRA_appsRoutes			(nolock)
+                                    
+                                    ".$userRoutes."
+
+                                    WHERE	GRA_appsRoutes.idApp		= 14
+                                    AND		GRA_appsRoutes.routeActive	= 1
+                                    ".$whereUser."
+                                
+                                    ORDER BY GRA_appsRoutes.routeGroup, GRA_appsRoutes.routeLabel");
+
+        /* $dbData = DB::select("  SELECT * 
+                                FROM gama..GRA_appsRoutes		(nolock)
+                                ".$restrictUser."
+                                WHERE	GRA_appsRoutes.idApp		= 14
+                                AND		GRA_appsRoutes.routeActive	= 1
+                                ORDER BY GRA_appsRoutes.routeGroup, GRA_appsRoutes.routeLabel"); */
+        
+        $menuData   = [];
+        foreach ($dbData as $row => $data) {
+            $menuData[$data->routeGroup][$data->routeLabel] = [ 'name'          => $data->routeName,
+                                                                'description'   => $data->routeDescription,
+                                                                'controller'    => $data->routeController,
+                                                                'class'         => $data->routeClass,
+                                                                'targetType'    => $data->routeTarget,
+                                                                'targetElement' => $data->routeTargetId,
+                                                                'param'         => $data->routeParam];
+        }
+
+        return $menuData;
+    }
 }

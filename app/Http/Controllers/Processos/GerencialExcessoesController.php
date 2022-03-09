@@ -15,6 +15,7 @@ use App\Models\GerencialPeriodo;
 class GerencialExcessoesController extends Controller
 {
     public  $errors;
+    public  $infoMessage;
 
     private $excecoes;
     private $importa;
@@ -44,8 +45,9 @@ class GerencialExcessoesController extends Controller
         $dbContas = $this->excecoes->getOutrasContas($codigoRegional);
 
         if (!$dbContas) {
-            $this->errors[] = ['errorTitle' => 'PROCESSAMENTO DE EXCEÇÔES | OUTRAS CONTAS', 'error'   => 'Não foram encontradas exceções de outras contas cadastradas para processamento.'];
-            return view('processamento.validacao', ['errors' => $this->errors]);
+            $this->infoMessage[] = ['infoTitle' => 'PROCESSAMENTO DE EXCEÇÔES | OUTRAS CONTAS', 'message'   => 'Não foram encontradas exceções de outras contas cadastradas para processamento.'];
+            return TRUE;
+//            return view('processamento.validacao', ['errors' => $this->errors]);
         }
         else {
 
@@ -93,7 +95,7 @@ class GerencialExcessoesController extends Controller
 
             // Grava os lançamentos de outras contas contábeis
             if ($this->lancamento->gravaLancamento($lancamentos)) {
-                $this->errors[] = ['errorTitle' => 'OUTRAS CONTAS [SALDO CONTÁBIL]', 'error'   => 'Saldo importado com sucesso!'];
+                $this->infoMessage[] = ['infoTitle' => 'OUTRAS CONTAS [SALDO CONTÁBIL]', 'message'   => 'Saldo importado com sucesso!'];
                 return TRUE;
             }
             else {
@@ -121,8 +123,8 @@ class GerencialExcessoesController extends Controller
         // Carrega as amrotizações cadastradas, ativas e com parcelas amortizadas 
         // menor que o total de parcelas
         if (!$dbData = $this->excecoes->getAmortizacoes()) {
-            $this->errors[] = ['errorTitle' => 'AMORTIZAÇÃO', 'error'   => 'Nenhuma amortização encontrada!'];
-            return FALSE;
+            $this->infoMessage[] = ['infoTitle' => 'AMORTIZAÇÃO', 'message'   => 'Nenhuma amortização encontrada!'];
+            return TRUE;
         } 
         else {
 
@@ -202,7 +204,7 @@ class GerencialExcessoesController extends Controller
 
             // Registra os lançamentos gerenciais de amortização
             if ($this->lancamento->gravaLancamento($lancamentos)) {
-                $this->errors[] = ['errorTitle' => 'AMORTIZAÇÃO', 'error'   => 'Amortizações processadas com sucesso!'];
+                $this->infoMessage[] = ['infoTitle' => 'AMORTIZAÇÃO', 'message'   => 'Amortizações processadas com sucesso!'];
                 return TRUE;
             }
             else {

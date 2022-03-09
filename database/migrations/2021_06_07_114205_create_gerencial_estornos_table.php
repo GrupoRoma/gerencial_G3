@@ -22,6 +22,10 @@ class CreateGerencialEstornosTable extends Migration
             $table->foreign('idCentroCusto')->references('id')->on('gerencialCentroCusto');
             $table->char('estornoAtivo',1)->comment('Identifica se o parâmetro de estorno está ativo S: Sim | N: Não');
             $table->text('justificativa')->nullable()->comment('Justificativa para o estorno');
+
+            // alterado em 18/02/22
+            $table->integer('codigoSubContaERP')->nullable()->comment('Código da sub-conta contábil associada');
+
             $table->timestamps();
         });
     }

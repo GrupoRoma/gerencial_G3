@@ -5,8 +5,10 @@
         "showToolBar": true,
         "dataDateFormat": "d/m/Y",
         "selectionData": [
-                                {"columnName": "periodoLancamento", "formType": "periodoGerencial", "initalValue": "", "label": "Período"},
+                                {"columnName": "periodoGerencial", "formType": "period", "initalValue": "", "label": "Período"},
                                 {"columnName": "idEmpresa", "formType": "foreignKey", "initalValue": "", "label": "Empresa" },
+                                {"columnName": "idContaGerencial", "formType": "foreignKey", "initalValue": "", "label": "Conta Gerencial" },
+                                {"columnName": "centroCusto", "formType": "foreignKey", "initalValue": "", "label": "Centro de Custo" },
                                 {"columnName": "idTipoLancamento", "formType": "foreignKey", "initalValue": "", "label": "Tipo de Lançamento" }
                          ],
 

@@ -10,6 +10,8 @@ class GerencialPeriodo extends Model
     public  $mesAtivo;
     public  $anoAtivo;
 
+    public  $errors;
+
     protected   $situacaoCheck = "'AB', 'LC'";
 
     protected $table = 'gerencialPeriodos';
@@ -110,9 +112,13 @@ class GerencialPeriodo extends Model
 
         $this->situacaoCheck    = "'AB', 'LC'";
 
-        if (count($dbData) == 0)    return FALSE;
+        if (count($dbData) == 0) {
+            $this->errors[] = "Não foi encontrado nenhum período (mês/ano) ativo e aberto [AB | LC]";
+            return FALSE;
+        }
 
-        $returnData = [];
+        $returnData     = [];
+        $periodosAbertos= '';
         foreach ($dbData as $data) {
             $returnData[] = ['ano'       => $data->ano, 
                             'mes'        => $data->mes, 
@@ -121,6 +127,13 @@ class GerencialPeriodo extends Model
                             'MESANO'     => $data->mes.'/'.$data->ano,
                             'situacao'   => $data->situacao,
                             'observacoes'=> $data->observacoes] ;
+            
+            $periodosAbertos .= $data->mes.'/'.$data->ano.(!empty($periodosAbertos) ? ', ' : '');
+        }
+
+        if(count($dbData) > 1) {
+            $this->errors[] = "Os períodos ".$periodosAbertos." estão abertos. Favor corrigir e tentar novamente.";
+            return FALSE;
         }
 
         return $returnData;

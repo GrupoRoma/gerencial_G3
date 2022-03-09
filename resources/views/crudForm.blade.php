@@ -18,7 +18,7 @@
                                                            ELSE types.name
                                                            END,
                                     /*  Identifica o nome da tabela de dados da chave estrangeira para gerar os dados para o select */
-                                    foreignTable    = ( SELECT SUBSTRING(TabelaFK.name,4,LEN(TabelaFK.name))
+                                    foreignTable    = ( SELECT CASE WHEN SUBSTRING(TabelaFK.name,1,3) <> '".$tablePrefix."' THEN TabelaFK.name ELSE SUBSTRING(TabelaFK.name,4,LEN(TabelaFK.name)) END
                                                         FROM sys.tables                 AS TabelaFK
                                                         JOIN sys.foreign_keys           AS FKey     ON FKey.referenced_object_id = TabelaFK.object_id
                                                         JOIN sys.foreign_key_columns    AS FKC      ON FKC.constraint_object_id = FKey.object_id
@@ -69,7 +69,8 @@
 {{--@if (isset($errors) && count($errors) > 0) {{dd($errors)}} @endif --}}
 
 <form id="gerencial-form" action="{{route($formAction, $id)}}" method="{{$method}}" data-redir="{{route($routeName.'.index')}}">
-<input type="hidden" name="_method" value="{{$method}}">
+    @csrf
+    <input type="hidden" name="_method" value="{{$method}}">
 
 {{-- Carrega o layout para os formulário de CRUD --}}
 @extends('layouts.crud')
@@ -213,4 +214,5 @@
 
 </form>
 
+</div>
 @endsection

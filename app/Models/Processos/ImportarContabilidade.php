@@ -18,6 +18,7 @@ class ImportarContabilidade extends Model
     public  $mesAtivo;
     public  $anoAtivo;
     public  $empresasRegional;
+    public  $empresasRegionalERP;
     public  $codigoRegional;
     public  $dataLancamentos;
 
@@ -44,7 +45,7 @@ class ImportarContabilidade extends Model
         $parMes         = $parMes ?? $this->mesAtivo;
         $parAno         = $parAno ?? $this->anoAtivo;
 
-        $listaEmpresas  = implode(', ', $this->empresasRegional);
+        $listaEmpresas  = implode(', ', $this->empresasRegionalERP);
 
         if (empty($parMes) || empty($parAno)) {
             $this->errors[] = ['errorTitle' => '<small>[log]</small> VALIDAÇÃO DE CONTA CONTÁBIL PERÍODO', 'error'   => 'Período Mês/Ano não informado'];
@@ -117,9 +118,10 @@ class ImportarContabilidade extends Model
         $parMes         = $parMes ?? $this->mesAtivo;
         $parAno         = $parAno ?? $this->anoAtivo;
 
-        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegional)
-                                                ->where('validaIntegracaoContabil', '=', 'S')
-                                                ->where('empresaAtiva', '=', 'S')
+//        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegional)
+        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegionalERP)
+                                                ->where('validaIntegracaoContabil', 'S')
+                                                ->where('empresaAtiva', 'S')
                                                 ->get();
         $listaEmpresas = '';
         foreach($empresasIntegracao as $data) {
@@ -336,7 +338,7 @@ class ImportarContabilidade extends Model
         $parMes    = $parMes ?? $this->mesAtivo;
         $parAno    = $parAno ?? $this->anoAtivo;
 
-        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegional)
+        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegionalERP)
                                                 ->where('empresaAtiva', '=', 'S')
                                                 ->get();
         $listaEmpresas = '';
@@ -404,7 +406,7 @@ class ImportarContabilidade extends Model
         $parMes    = $parMes ?? $this->mesAtivo;
         $parAno    = $parAno ?? $this->anoAtivo;
 
-        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegional)
+        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegionalERP)
                                                 ->where('empresaAtiva', '=', 'S')
                                                 ->get();
         $listaEmpresas = '';
@@ -470,7 +472,7 @@ class ImportarContabilidade extends Model
         $parMes    = $parMes ?? $this->mesAtivo;
         $parAno    = $parAno ?? $this->anoAtivo;
 
-        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegional)
+        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegionalERP)
                                                 ->where('empresaAtiva', '=', 'S')
                                                 ->get();
         $listaEmpresas = '';
@@ -488,7 +490,7 @@ class ImportarContabilidade extends Model
         }
 
         $dbData = DB::select("SELECT origem				= 'CTB',
-                                     valorTotalVenda	= ROUND(SUM(Lancamento.Lancamento_Valor),2)
+                                     valorTotalVenda	= ROUND(SUM(Lancamento.Lancamento_Valor * CASE WHEN Lancamento.Lancamento_Natureza = 'D' THEN -1 ELSE 1 END),2)
                               FROM GrupoRoma_DealernetWF..Lancamento      (nolock)
                               JOIN GrupoRoma_DealernetWF..PlanoConta      (nolock) ON PlanoConta.PlanoConta_Codigo           = Lancamento.Lancamento_PlanoContaCod
                               JOIN GrupoRoma_DealernetWF..CentroResultado (nolock) ON CentroResultado.CentroResultado_Codigo = Lancamento.Lancamento_CentroResultadoCod
@@ -500,8 +502,9 @@ class ImportarContabilidade extends Model
                               /* DA ESTRUTURA DO PLANO DE CONTAS [5] AUTOMOTIVO */
                               AND   CentroResultado.Estrutura_Codigo				= '5'
                               /* LANÇAMENTOS PARA AS CONTAS CONTÁBEIS IDENTIFICADAS NO GERENCIAL COMO CONTA DE RECEITA DE VEÍCULOS */
-                              AND   PlanoConta.PlanoConta_ID						IN (SELECT codigoContaContabil  COLLATE SQL_Latin1_General_CP1_CI_AI
-                                                                                    FROM gama..sga_gerencialReceitaVeiculos (nolock))
+                              AND   PlanoConta.PlanoConta_ID						IN (SELECT  G3_gerencialContaContabil.contaContabil collate SQL_Latin1_General_CP1_CI_AS
+                                                                                        FROM	GAMA..G3_gerencialContaContabil (nolock)
+                                                                                        WHERE	G3_gerencialContaContabil.receitaVeiculo = 'S')
                               /* NOS CENTROS DE CUSTO [1] VEÍCULOS NOVOS e [3] VEÍCULOS USADOS */
                               AND   CentroResultado.CentroResultado_Codigo		IN (1,3)
                               /* EMPRESAS DA REGIONL SELECIONADA */
@@ -558,7 +561,8 @@ class ImportarContabilidade extends Model
                                         nomeEmpresaOrigem		= Empresa.Empresa_Nome,
                                         codigoEmpresaVenda		= CASE WHEN CONVERT(varchar, NotaFiscal.NotaFiscal_UsuCodVendedor) IN (G3_gerencialRegional.codigoVendasExternasERP) 
                                                                                 THEN G3_gerencialRegional.codigoEmpresaVendaExterna
-                                                                        ELSE EmpresaVenda.Empresa_Codigo
+																	   WHEN EmpresaVendaRegional.Empresa_Codigo IS NULL THEN NotaFiscal.NotaFiscal_EmpresaCod
+                                                                       ELSE EmpresaVenda.Empresa_Codigo
                                                                     END,
                                         codigoVeiculo			= Veiculo.Veiculo_Codigo,
                                         numeroDocumento			= NotaFiscal.NotaFiscal_Codigo,
@@ -572,7 +576,7 @@ class ImportarContabilidade extends Model
                                                                         AND   nfCompra.NotaFiscal_Movimento = 'E'
                                                                         AND   nfCompra.NotaFiscal_DataEmissao <= NotaFiscal.NotaFiscal_DataEmissao
                                                                         AND   NaturezaOperacao.NaturezaOperacao_GrupoMovimento = 'COM'
-                                                                        ORDER BY nfCompra.NotaFiscal_DataEmissao DESC),
+                                                                        ORDER BY nfCompra.NotaFiscal_DataEmissao DESC) * -1,
                                         tipoOperacao			= NaturezaOperacao.NaturezaOperacao_GrupoMovimento,
                                         codigoVendedorNF		= Vendedor.Usuario_Codigo,
                                         valorICMS				= (SELECT SUM(NotaFiscalitemTributo_Valor) 
@@ -659,6 +663,16 @@ class ImportarContabilidade extends Model
                                             /* 6. CASO NENHUMA DAS ALTERNATIVAS ACIMA SEJA SATISFEITA IRÁ RETORNAR O CÓDIGO
                                                 DA EMPRESA QUE EMITIU A NOTA FISCAL DE VENDA */
                                             NotaFiscal.NotaFiscal_EmpresaCod)
+                              /* VERIFICA SE A EMPRESA DE VENDA (do vendedor) É DA MESMA REGIONAL SELECIONADA
+                                 SENÃO, MANTÉM A EMPRESA DE EMISSÃO DA NOA FISCAL
+                              */
+                              OUTER APPLY (	SELECT Empresa.*
+                                            FROM GrupoRoma_DealernetWF..Empresa				(nolock)
+                                            JOIN GAMA..G3_gerencialEmpresas GEmpresaVenda	(nolock) ON GEmpresaVenda.codigoEmpresaERP	= Empresa.Empresa_Codigo
+                                            JOIN GAMA..G3_gerencialRegional GRegionalVenda	(nolock) ON GRegionalVenda.id				= GEmpresaVenda.codigoRegional
+                                            WHERE	Empresa.Empresa_Codigo = EmpresaVenda.Empresa_Codigo
+                                            AND		GRegionalVenda.id	= G3_gerencialRegional.id
+                                        ) AS EmpresaVendaRegional
 
                               /* NOTAS FISCAIS COM SITUAÇÃO [EMI] EMITIDAS */
                               WHERE  NotaFiscal.NotaFiscal_Status = 'EMI'
@@ -684,9 +698,10 @@ class ImportarContabilidade extends Model
                               SELECT codigoEmpresaOrigem		= NotaFiscal.NotaFiscal_EmpresaCod,
                                      nomeEmpresaOrigem		    = Empresa.Empresa_Nome,
                                      codigoEmpresaVenda		    = CASE WHEN CONVERT(varchar, NotaFiscal.NotaFiscal_UsuCodVendedor) IN (G3_gerencialRegional.codigoVendasExternasERP) 
-                                                                            THEN G3_gerencialRegional.codigoEmpresaVendaExterna
-                                                                    ELSE EmpresaDevolucao.Empresa_Codigo
-                                                                  END,
+                                                                                THEN G3_gerencialRegional.codigoEmpresaVendaExterna
+																	   WHEN EmpresaDevolucaoRegional.Empresa_Codigo IS NULL THEN NotaFiscal.NotaFiscal_EmpresaCod
+                                                                       ELSE EmpresaDevolucao.Empresa_Codigo
+                                                                    END,
                                      codigoVeiculo			    = Veiculo.Veiculo_Codigo,
                                      numeroDocumento			= NotaFiscal.NotaFiscal_Codigo,
                                      valorReceita				= (NotaFiscal.NotaFiscal_ValorTotal - NotaFiscal.NotaFiscal_ValorDesconto) * -1,
@@ -788,6 +803,18 @@ class ImportarContabilidade extends Model
                                                 /* 6. CASO NENHUMA DAS ALTERNATIVAS ACIMA SEJA SATISFEITA IRÁ RETORNAR O CÓDIGO
                                                     DA EMPRESA QUE EMITIU A NOTA FISCAL DE VENDA */
                                                 NFVenda.NotaFiscal_EmpresaCod)
+
+                              /* VERIFICA SE A EMPRESA DE VENDA (do vendedor) É DA MESMA REGIONAL SELECIONADA
+                                 SENÃO, MANTÉM A EMPRESA DE EMISSÃO DA NOA FISCAL
+                              */
+                              OUTER APPLY (	SELECT Empresa.*
+                                            FROM GrupoRoma_DealernetWF..Empresa EmpresaDevolucao    (nolock)
+                                            JOIN GAMA..G3_gerencialEmpresas GEmpresaDevolucao	    (nolock) ON GEmpresaDevolucao.codigoEmpresaERP	= Empresa.Empresa_Codigo
+                                            JOIN GAMA..G3_gerencialRegional GRegionalDevolucao	    (nolock) ON GRegionalDevolucao.id				= GEmpresaDevolucao.codigoRegional
+                                            WHERE	EmpresaDevolucao.Empresa_Codigo = Empresa.Empresa_Codigo
+                                            AND		GRegionalDevolucao.id	        = G3_gerencialRegional.id
+                                        ) AS EmpresaDevolucaoRegional
+
                               /* NOTAS FISCAIS COM SITUAÇÃO [EMI] EMITIDAS */
                               WHERE  NotaFiscal.NotaFiscal_Status = 'EMI'
                               /* RESTRINGE ÀS VENDAS DA REGIONAL INFORMADA PARA IMPORTAÇÃO DOS LANÇAMENTOS CONTÁBEIS */
@@ -850,7 +877,7 @@ class ImportarContabilidade extends Model
         $parMes    = $parMes ?? $this->mesAtivo;
         $parAno    = $parAno ?? $this->anoAtivo;
         
-        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegional)
+        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegionalERP)
                                                 ->where('empresaAtiva', '=', 'S')
                                                 ->get();
         $listaEmpresas = '';
@@ -1056,7 +1083,7 @@ class ImportarContabilidade extends Model
         $parMes    = $parMes ?? $this->mesAtivo;
         $parAno    = $parAno ?? $this->anoAtivo;
         
-        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegional)
+        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegionalERP)
                                                 ->where('empresaAtiva', '=', 'S')
                                                 ->get();
         $listaEmpresas = '';
@@ -1186,7 +1213,7 @@ class ImportarContabilidade extends Model
         $parMes    = $parMes ?? $this->mesAtivo;
         $parAno    = $parAno ?? $this->anoAtivo;
 
-        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegional)
+        $empresasIntegracao = GerencialEmpresas::whereIn('codigoEmpresaERP', $this->empresasRegionalERP)
                                                 ->where('empresaAtiva', '=', 'S')
                                                 ->get();
         $listaEmpresas = '';

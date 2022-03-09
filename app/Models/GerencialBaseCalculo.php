@@ -136,7 +136,12 @@ class GerencialBaseCalculo extends Model
             foreach ($calculo as $base => $val) {
                 $valorTotalBase = $val['VALOR_TOTAL'];
                 foreach ($val['EMPRESA'] as $codigoEmpresa => $valEmpresa ) {
-                    $calculo[$base]['EMPRESA'][$codigoEmpresa]['PESO'] = $valEmpresa['VALOR_BASE'] / $valorTotalBase;
+                    if ($valorTotalBase <> 0) {
+                        $calculo[$base]['EMPRESA'][$codigoEmpresa]['PESO'] = $valEmpresa['VALOR_BASE'] / $valorTotalBase;
+                    }
+                    else {
+                        $calculo[$base]['EMPRESA'][$codigoEmpresa]['PESO'] = $valEmpresa['VALOR_BASE'];
+                    }
 
                     // (detalhe)
                     // Calcula os valores dos centros de custos que possuem lançamentos
@@ -145,8 +150,19 @@ class GerencialBaseCalculo extends Model
                     // PESO / FATOR EM RELAÇÃO DO TOTAL DA BASE DE CÁLCULO
                     foreach ($valEmpresa['CENTRO_CUSTO'] as $codigoCcusto => $valCcusto) {
 
-                        $calculo[$base]['EMPRESA'][$codigoEmpresa]['CENTRO_CUSTO'][$codigoCcusto]['PESO_EMPRESA']    = $valCcusto['VALOR_BASE'] / $valEmpresa['VALOR_BASE'];
-                        $calculo[$base]['EMPRESA'][$codigoEmpresa]['CENTRO_CUSTO'][$codigoCcusto]['PESO_TOTAL']      = $valCcusto['VALOR_BASE'] / $valorTotalBase;
+                        if ($valEmpresa['VALOR_BASE'] <> 0) {
+                            $calculo[$base]['EMPRESA'][$codigoEmpresa]['CENTRO_CUSTO'][$codigoCcusto]['PESO_EMPRESA']    = $valCcusto['VALOR_BASE'] / $valEmpresa['VALOR_BASE'];
+                        }
+                        else {
+                            $calculo[$base]['EMPRESA'][$codigoEmpresa]['CENTRO_CUSTO'][$codigoCcusto]['PESO_EMPRESA']    = $valCcusto['VALOR_BASE'];
+                        }
+
+                        if ($valorTotalBase <> 0) {
+                            $calculo[$base]['EMPRESA'][$codigoEmpresa]['CENTRO_CUSTO'][$codigoCcusto]['PESO_TOTAL']      = $valCcusto['VALOR_BASE'] / $valorTotalBase;
+                        }
+                        else {
+                            $calculo[$base]['EMPRESA'][$codigoEmpresa]['CENTRO_CUSTO'][$codigoCcusto]['PESO_TOTAL']      = $valCcusto['VALOR_BASE'];
+                        }
                     }
                 }
             } 

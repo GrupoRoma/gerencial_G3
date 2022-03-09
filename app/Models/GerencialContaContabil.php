@@ -19,6 +19,7 @@ class GerencialContaContabil extends Model
                                 'codigoContaContabilERP', 
                                 //'contaContabil', 
                                 'codigoSubContaERP',
+                                'saldoInvertido',
                                 'contaContabilAtiva', 
                                 'receitaVeiculo',
                                 'idCentroCusto'];
@@ -27,16 +28,21 @@ class GerencialContaContabil extends Model
                                 'codigoContaContabilERP'    => 'Código da Conta (ERP)',
                                 //'contaContabil'             => 'Número da Conta Contábil',
                                 'codigoSubContaERP'         => 'Sub-Conta',
+                                'saldoInvertido'            => 'Importar Saldo invertido',
                                 'contaContabilAtiva'        => 'Conta Contábil Ativa',
                                 'receitaVeiculo'            => 'Conta de Receita de Veículos (VN)',
                                 'idCentroCusto'             => 'Centro de Custo Associado'];
 
     public $columnValue     = ['contaContabilAtiva' => ['S' => 'Sim', 'N' => 'Não'],
-                               'receitaVeiculo'     => ['S' => 'Sim', 'N' => 'Não']];
+                               'receitaVeiculo'     => ['S' => 'Sim', 'N' => 'Não'],
+                               'saldoInvertido'     => ['S' => 'Sim', 'N' => 'Não']
+                            ];
 
-    public $customType      = ['contaContabilAtiva' => ['type'      => 'radio',
+    public $customType      = [ 'contaContabilAtiva' => ['type'      => 'radio',
                                                         'values'    => ['S' => 'Sim', 'N' => 'Não']],
-                               'receitaVeiculo'     => ['type'      => 'radio',
+                                'receitaVeiculo'     => ['type'      => 'radio',
+                                                        'values'    => ['S' => 'Sim', 'N' => 'Não']],
+                                'saldoInvertido'     => ['type'      => 'radio',
                                                         'values'    => ['S' => 'Sim', 'N' => 'Não']]
                               ];
 
@@ -195,8 +201,11 @@ class GerencialContaContabil extends Model
      *  @return     boolean     (TRUE = Found | FALSE = Not Found)
      */
     public function validateUnique($idContaGerencial, $codigoContaContabil) {
-        return GerencialContaContabil::where('idContaGerencial', $idContaGerencial)
-                                     ->where('codigoContaContabilERP', $codigoContaContabil)
-                                     ->get();
+        $dbData =   GerencialContaContabil::where('idContaGerencial', $idContaGerencial)
+                                        ->where('codigoContaContabilERP', $codigoContaContabil)
+                                        ->get();
+                                        
+        if (count($dbData) == 0)    return FALSE;
+        else                        return TRUE;
     }
 }

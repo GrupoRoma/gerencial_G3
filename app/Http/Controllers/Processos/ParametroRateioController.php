@@ -17,6 +17,7 @@ use App\Models\GerencialTabelaRateio;
 use App\Models\GerencialBaseCalculo;
 use App\Models\GerencialContaGerencial;
 use App\Models\GerencialEmpresas;
+use App\Models\GerencialCentroCusto;
 use App\Models\GerencialRegional;
 use App\Models\GerencialPeriodo;
 use App\Models\GerencialTabelaRateioPercentual;
@@ -53,6 +54,7 @@ class ParametroRateioController extends Controller
         $this->tabelaRateio         = new GerencialTabelaRateio;
         $this->tabelaPercentuais    = new GerencialTabelaRateioPercentual;
         $this->rateios              = new Rateios;
+        $this->empresas             = new GerencialEmpresas;
 
         $this->periodoCorrente = $this->periodo->current();
     }
@@ -72,6 +74,8 @@ class ParametroRateioController extends Controller
      */
     public function processarParametros() {
 
+        set_time_limit(0);
+
         // Inicializa a transação
         DB::beginTransaction();
 
@@ -88,7 +92,7 @@ class ParametroRateioController extends Controller
             DB::rollBack();
             return view('processamento.validacao', ['errors' => $this->errors]);
         }
-        else {
+        else { 
             // Processa os parâmetros de rateio por TABELA
             if (!$this->parametroRateio_Tabela())   {
                 DB::rollBack();
@@ -143,8 +147,8 @@ class ParametroRateioController extends Controller
                     $rateioOrigem   = $this->parametro->valorOrigem($this->periodoCorrente->mes,
                                                                     $this->periodoCorrente->ano,
                                                                     $codigoEmpresaOrigem,
-                                                                    $dataRateio->codigoContaGerencialOrigem,
-                                                                    $codigoCentroCustoOrigem);
+                                                                    $codigoCentroCustoOrigem,
+                                                                    $dataRateio->codigoContaGerencialOrigem);
                     if (!empty($rateioOrigem)) {
                         $historicoLancamento  = $this->historico['historicoPadrao'].' CONTRAPARTIDA | ';
                         if ($this->historico['incremental'] == 'S') {
@@ -184,8 +188,16 @@ class ParametroRateioController extends Controller
                             ['column'   => 'G3_gerencialLancamentos.idTipoLancamento', 'operator'  => '<>', 'value' => 7]
                         ];
             // Calcula os valores para a base de cálculo
-            $valoresBaseCalculo = $this->basesCalculo->calculaBases($this->periodoCorrente->mes,
-                                                                    $this->periodoCorrente->ano);
+/*             $valoresBaseCalculo = $this->basesCalculo->calculaBases($this->periodoCorrente->mes,
+                                                                    $this->periodoCorrente->ano); */
+
+// Calcula os valores para a base de cálculo a partir da(s) empresa(s)
+// e centro(s) de custo de destino
+             $valoresBaseCalculo = $this->basesCalculo->calculaBases($this->periodoCorrente->mes,
+                                                                    $this->periodoCorrente->ano,
+                                                                    $dataRateio->codigoEmpresaDestino,
+                                                                    $dataRateio->codigoCentroCustoDestino);
+
             // Registra os lançamentos de rateio nos destinos
             // Valor a Apropriar * Peso (empresa / centro de custo)
             foreach ($this->lancamentoGerencial->getLancamentosRateio(  $this->periodoCorrente->mes, 
@@ -193,13 +205,19 @@ class ParametroRateioController extends Controller
                                                                         $dataRateio->codigoEmpresaDestino,
                                                                         $dataRateio->codigoCentroCustoDestino ) as $row => $destino) {
 
+
+
                 // Se existir base de cáculo para o Parâmetro de Rateio (Empresa e Centro Custo)
                 // processa o rateio e registra o lançamento
                 if (isset($valoresBaseCalculo[$dataRateio->idBaseCalculo]['EMPRESA'][$destino->codigoEmpresa]['CENTRO_CUSTO'][$destino->codigoCentroCusto]['PESO_EMPRESA'])) {
 
-                    $pesoCentroCusto = $valoresBaseCalculo[$dataRateio->idBaseCalculo]
+/*                     $pesoCentroCusto = $valoresBaseCalculo[$dataRateio->idBaseCalculo]
                                                             ['EMPRESA'][$destino->codigoEmpresa]
                                                             ['CENTRO_CUSTO'][$destino->codigoCentroCusto]['PESO_EMPRESA'];
+ */
+                        $pesoCentroCusto = $valoresBaseCalculo[$dataRateio->idBaseCalculo]
+                                                                ['EMPRESA'][$destino->codigoEmpresa]
+                                                                ['CENTRO_CUSTO'][$destino->codigoCentroCusto]['PESO_TOTAL'];
 
                     $valorRateio        = ($valorApropriar * $pesoCentroCusto);
 
@@ -232,11 +250,11 @@ class ParametroRateioController extends Controller
                             if (!$this->lancamentoGerencial->gravaLancamento([$lancamentoRateio])) {
                                 $queryLog = DB::getQueryLog();
                                 $this->erros = $this->lancamentoGerencial->errors;
-    echo 'ERRO GRAVAÇÃO';
+/*    echo 'ERRO GRAVAÇÃO';
     echo '<br>'.$valorRateio;
     print_r($this->lancamentoGerencial->errors);
     dd($lancamentoRateio);
-                                /* 
+  */                              /* 
                                 $this->errors[] = ['errorTitle' => "Código Empresa", 'error' => $destino->codigoEmpresa]; 
                                 $this->errors[] = ['errorTitle' => "Histórico", 'error' => $historicoRateio];
                                 $this->errors[] = ['errorTitle' => "Valor a Apropriar", 'error' => $valorApropriar];
@@ -284,7 +302,8 @@ class ParametroRateioController extends Controller
 
             // Inicializa as variáveis de valor a apropriar e dos lançamentos de contrapartida a serem gravados
             $valorApropriar             = 0;
-            $lancamentoContraPartida    = [];
+//            $lancamentoContraPartida    = [];
+            $contrapartida              = [];
 
             // Gerar os lançamentos de contrapartida para cada uma das empresas e centros de custo
             // Processa todas empresas de origem
@@ -296,8 +315,8 @@ class ParametroRateioController extends Controller
                     $rateioOrigem   = $this->parametro->valorOrigem($this->periodoCorrente->mes,
                                                                     $this->periodoCorrente->ano,
                                                                     $codigoEmpresaOrigem,
-                                                                    $dataRateio->codigoContaGerencialOrigem,
-                                                                    $codigoCentroCustoOrigem);
+                                                                    $codigoCentroCustoOrigem,
+                                                                    $dataRateio->codigoContaGerencialOrigem);
                     if (!empty($rateioOrigem)) {
 
                         // Prepara o histórico para o lançamento de contrapartida
@@ -312,17 +331,32 @@ class ParametroRateioController extends Controller
                         // Processa os dados para cálculo do valor de origem a ser apropriado
                         foreach ($rateioOrigem as $row => $valores) {
                             // Inclui os dados do lançamento para gravação
-                            $lancamentoContraPartida[]  = [ 'mesLancamento'         => $this->periodoCorrente->mes, 
+                            // Se a conta gerencial de origem não for informada
+                            // registra o lançamento de contrapartida na conta gerencial de destino
+                            if (empty($dataRateio->codigoContaGerencialOrigem)) {
+                                $contaGerencialContrapartida = $dataRateio->codigoContaGerencialDestino;
+                            }
+                            else {
+                                $contaGerencialContrapartida = $dataRateio->codigoContaGerencialOrigem;
+                            }
+
+                            $contrapartida[]    = [ 'empresa'           => $codigoEmpresaOrigem,
+                                                    'centroCusto'       => $codigoCentroCustoOrigem,
+                                                    'contaGerencial'    => $contaGerencialContrapartida,
+                                                    'historico'         => $historicoLancamento,
+                                                    'valorOrigem'       => $valores->valorOrigem
+                                                  ];
+                            /* $lancamentoContraPartida[]  = [ 'mesLancamento'         => $this->periodoCorrente->mes, 
                                                             'anoLancamento'         => $this->periodoCorrente->ano, 
                                                             'idEmpresa'             => $codigoEmpresaOrigem,
                                                             'centroCusto'           => $codigoCentroCustoOrigem,
-                                                            'idContaGerencial'      => $dataRateio->codigoContaGerencialOrigem,
+                                                            'idContaGerencial'      => $contaGerencialContrapartida,
                                                             'creditoDebito'         => ($valores->valorOrigem > 0 ? 'DEB' : 'CRD'),
                                                             'valorLancamento'       => ($valores->valorOrigem * -1),
                                                             'historicoLancamento'   => $historicoLancamento,
-                                                            'idTipoLancamento'      => 7,   /* PARÂMETRO RATEIO */
+                                                            'idTipoLancamento'      => 7,   /* PARÂMETRO RATEIO * /
                                                             'codigoContaContabil'   => NULL];
-                                                            //'codigoContaContabil'   => $valores->codigoContaContabil];
+                                                            //'codigoContaContabil'   => $valores->codigoContaContabil]; */
 
                             // Acumula o valor total da origem a ser rateado
                             $valorApropriar += $valores->valorOrigem;
@@ -332,7 +366,7 @@ class ParametroRateioController extends Controller
             }   // Empresas de origem
 
             // Registra os lancamentos de contrapartida
-            $this->lancamentoGerencial->gravaLancamento($lancamentoContraPartida);
+//            $this->lancamentoGerencial->gravaLancamento($lancamentoContraPartida);
 
             /***** LANÇAMENTOS DE RATEIO ******/
 
@@ -342,7 +376,8 @@ class ParametroRateioController extends Controller
             // Identifica os centros de custo de destino para aplicação do rateio
             $centroCustoDestino = explode(',', $dataRateio->codigoCentroCustoDestino);
 
-            $lancamentoRateio   = [];
+            $lancamentoRateio       = [];
+            $percentualTotalRateio  = 0;
 
             // Processa as empresas de destino
             foreach ($empresasDestino as $codigoEmpresa) {
@@ -353,8 +388,25 @@ class ParametroRateioController extends Controller
 //                    $percentualCCusto   = $this->tabelaPercentuais->getPercentuais($dataRateio->idTabelaRateio, $codigoCentroCusto);
                     $percentualCCusto   = $this->tabelaPercentuais->getPercentuais($codigoEmpresa, $dataRateio->idTabelaRateio, $codigoCentroCusto);
 
+                    if($percentualCCusto === FALSE) {
+                        $nomeEmpresa        = GerencialEmpresas::find($codigoEmpresa);
+                        $tabelaReferencia   = GerencialTabelaRateio::find($dataRateio->idTabelaRateio);
+                        $centroCusto        = GerencialCentroCusto::find($codigoCentroCusto);
+
+                        $this->errors[] = ['errorTitle' => "TABELA DE REFERÊNCIA", 'error' => 'Não foram encontrados valores na tabela de referência para:
+                                                                                                <ul>
+                                                                                                    <li>PARÂMETRO DE RATEIO: '.($dataRateio->descricaoParametro ?? "Não Identificado").'</li>
+                                                                                                    <li>TABELA DE REFERENCIA: ['.$dataRateio->idTabelaRateio.']'.($tabelaReferencia->descricao ?? "Não Identificado").'</li>
+                                                                                                    <li>EMPRESA: ['.$codigoEmpresa.']'.($nomeEmpresa->nomeAlternativo ?? "Não Identificada").'</li>
+                                                                                                    <li>CENTRO DE CUSTO: ['.$codigoCentroCusto.']'.($centroCusto->descricaoCentroCusto ?? "Não Identificado").'</li>
+                                                                                                </ul>'
+                                                                                                ];
+                        return FALSE;
+                    }
+
                     // Calcula o valor do rateio de acordo com percentual do centro de custo
-                    $valorRateio        = $valorApropriar * ($percentualCCusto->percentual / 100);
+                    $valorRateio            = $valorApropriar * ($percentualCCusto->percentual / 100);
+                    $percentualTotalRateio  += $percentualCCusto->percentual;
 
                     // Prepara o histórico do lançamento
                     $historicoLancamento  = $this->historico['historicoPadrao'].' RATEIO | ';
@@ -382,6 +434,31 @@ class ParametroRateioController extends Controller
 
             // Registra os lancamentos de contrapartida
             $this->lancamentoGerencial->gravaLancamento($lancamentoRateio);
+
+            // PROCESSA AS CONTRAPARTIDAS DE ACORDO COM OS VALORES RATEADOS
+            $lancamentoContraPartida    = [];
+
+            foreach ($contrapartida as $idx => $dataLancamento) {
+                
+                // Calcula o valor da contrapartida a partir do percentual total do rateio
+                // Invertendo o sinal do valor
+                $valorContrapartida = ($dataLancamento['valorOrigem'] * ($percentualTotalRateio / 100)) * -1;
+
+                // Prepara os dados para registro do lançamento
+                $lancamentoContraPartida[]  = [ 'mesLancamento'         => $this->periodoCorrente->mes, 
+                                                'anoLancamento'         => $this->periodoCorrente->ano, 
+                                                'idEmpresa'             => $dataLancamento['empresa'],
+                                                'centroCusto'           => $dataLancamento['centroCusto'],
+                                                'idContaGerencial'      => $dataLancamento['contaGerencial'],
+                                                'creditoDebito'         => ($valorContrapartida > 0 ? 'DEB' : 'CRD'),
+                                                'valorLancamento'       => $valorContrapartida,
+                                                'historicoLancamento'   => $dataLancamento['historico'],
+                                                'idTipoLancamento'      => 7,   /* PARÂMETRO RATEIO */
+                                                'codigoContaContabil'   => NULL];                
+            }
+            // Grava os lançamentos de contrapartida
+            $this->lancamentoGerencial->gravaLancamento($lancamentoContraPartida);
+
         }   //-- foreach RATEIO TABELA
 
         return TRUE;
@@ -393,6 +470,8 @@ class ParametroRateioController extends Controller
      *  Processa o cálculo do rateio da logística
      */
     public function rateioLogistica() {
+        set_time_limit(0);
+
         $resultadoLiquido = $this->lancamentoGerencial->resultadoLiquido(['mes'=> $this->periodoCorrente->mes, 'ano' => $this->periodoCorrente->ano]);
 
         $dataRateio = $this->rateios->rateioLogistica($this->periodoCorrente->mes, $this->periodoCorrente->ano);

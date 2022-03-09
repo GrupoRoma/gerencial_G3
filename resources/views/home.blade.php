@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="card-deck">
+{{-- <div class="card-deck">
     <div class="card" style="background-color: rgba(255,255,255, .5)">
         <div class="card-header bg-danger text-white tw-8">FUNCIONALIDADES DISPONÍVEIS PARA TESTES / VALIDAÇÃO</div>
         <div class="card-body">
@@ -44,11 +44,13 @@
             </ul>
         </div>
     </div>
-</div>
+</div> --}}
 
 <div class="flex-center full-height" style='z-index:-1000;'>
     <h1><span class="fa fa-chart-line"></span> {{config('app.name')}}</h1>
 </div>
 
+
+{{-- @dd(session()->all()); --}}
 </div>
 @endsection

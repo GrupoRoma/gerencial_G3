@@ -72,13 +72,29 @@ class RelatorioGerencialController extends Controller
         $this->reportConfigData = $this->reportGen->configData;
 
         $this->listaEmpresas    = GerencialEmpresas::where('empresaAtiva', 'S')
+                                                    ->where(function($restrict) {
+                                                                if(!empty(session('_GER_empresasAcesso'))) {
+                                                                    $restrict->whereIn('id', session('_GER_empresasAcesso'));
+                                                                }
+                                                            })
                                                     ->orderBy('nomeAlternativo')
                                                     ->get();
 
-        $this->listaRegionais   = GerencialRegional::orderBy('descricaoRegional')->get();
+        // Regionais das empresas com acesso
+        foreach ($this->listaEmpresas as $row => $dadosEmpresa) {
+            $regionais[] = $dadosEmpresa->codigoRegional;
+        }
+
+        $this->listaRegionais   = GerencialRegional::whereIn('id', $regionais)
+                                                    ->orderBy('descricaoRegional')->get();
 
         // Identifica os Centros de Custo para a Análise Vertical
         $this->listaCentroCusto = GerencialCentroCusto::where('centroCustoAtivo', 'S')
+                                                      ->where(function($restrict) {
+                                                                if(!empty(session('_GER_centrosCustoAcesso'))) {
+                                                                    $restrict->whereIn('id', session('_GER_centrosCustoAcesso'));
+                                                                }
+                                                            })
                                                         ->orderBy('ordemExibicao')
                                                         ->orderBy('descricaoCentroCusto')
                                                         ->get();
@@ -87,7 +103,7 @@ class RelatorioGerencialController extends Controller
     }
 
     public function index() {
-
+        
         return view('relatorios.gerencial.filtroGerencial', ['listaEmpresas'    => $this->listaEmpresas, 
                                                              'listaRegionais'   => $this->listaRegionais, 
                                                              'listaCentroCusto' => $this->listaCentroCusto,
@@ -146,14 +162,24 @@ class RelatorioGerencialController extends Controller
                                                                 ->get();
 
                 // Carrega os lançamentos para emissão do relatório
-                $verticalData = $this->lancamentos->getLancamentos(json_encode($this->reportConditions));
+                if ($this->reportLayout == 'layoutRegional') {
+                    $verticalData = $this->lancamentos->getLancamentosRegional(json_encode($this->reportConditions));
+                }
+                else {
+                    $verticalData = $this->lancamentos->getLancamentos(json_encode($this->reportConditions));
+                }
 
-                // Prepara os dados para exibição no relatório
-                $this->prepareVerticalData($verticalData);
-        
-                // Gera e exibe o relatório
-                $verticalReport     = $this->generateReport();
-        
+                if (!empty($verticalData)) {
+                    // Prepara os dados para exibição no relatório
+                    $this->prepareVerticalData($verticalData);
+
+                    // Gera e exibe o relatório
+                    $verticalReport     = $this->generateReport();
+                }
+                else {
+                    $verticalReport = FALSE;
+                }
+
                 //--- ANÁLISE HORIZONTAL    -----//
                 // Prepara as condições para seleção dos dados
                 $this->prepareConditions($request->all());
@@ -167,15 +193,30 @@ class RelatorioGerencialController extends Controller
                                                                 ->orderBy('ordemExibicao')
                                                                 ->orderBy('descricaoCentroCusto')
                                                                 ->get();
-        
-                $horizontalData     = $this->lancamentos->getLancamentos(json_encode($this->reportConditions));
-        
-                // Prepara os dados para exibição no relatório
-                $this->prepareHorizontalData($horizontalData);
-        
-                // Gera e exibe o relatório
-                $horizontalReport   =  $this->generateReport('H');
-        
+
+                if ($this->reportLayout == 'layoutRegional') {
+                    $horizontalData     = $this->lancamentos->getLancamentosRegional(json_encode($this->reportConditions));
+                }
+                else {
+                    $horizontalData     = $this->lancamentos->getLancamentos(json_encode($this->reportConditions));
+                }
+
+                if (!empty($horizontalData)) {
+                    // Prepara os dados para exibição no relatório
+                    $this->prepareHorizontalData($horizontalData);
+
+                    // Gera e exibe o relatório
+                    $horizontalReport   =  $this->generateReport('H');
+                }
+                else {
+                    $horizontalReport = FALSE;
+                }
+
+                // Não foram encontrados dados para exibição do relatório
+                if (!$verticalReport && !$horizontalReport) {
+                    return response(["Não foi encontrada nenhuma informação para gerar o relatório, de acordo com os critérios informados"], '500');
+                }
+
                 return $verticalReport.'<p>'.$horizontalReport;
                 break;
             
@@ -547,7 +588,9 @@ class RelatorioGerencialController extends Controller
      */
     private function generateReport($tipoAnalise = 'V') {
 
-        if (empty($this->preparedData)) return response()->json("Não foi encontrada nenhuma informação para gerar o relatório", 500);
+        if (empty($this->preparedData)) {
+            return FALSE;
+        }
         else {
 
 /*             $layout = ($this->reportLayout == 'layoutRegional' ? 'layoutEmpresa' : $this->reportLayout);
@@ -602,17 +645,23 @@ class RelatorioGerencialController extends Controller
      */
     public function detalhamentoContaGerencial(Request $request) { //String $mes, Int $ano, Int $codigoEmpresa, Int $codigoContaGerencial ) {
         $criterios      = [
-                            ['column'   => 'G3_gerencialLancamentos.idEmpresa',         'value' => $request->codigoEmpresa],
                             ['column'   => 'G3_gerencialLancamentos.idContaGerencial',  'value' => $request->codigoContaGerencial],
                             ['column'   => 'G3_gerencialLancamentos.mesLancamento',     'value' => $request->mes],
                             ['column'   => 'G3_gerencialLancamentos.anoLancamento',     'value' => $request->ano]
                           ];
-
+        if ($request->regional == '1') {
+            $criterios[] = ['column'   => 'G3_gerencialRegional.id',    'value' => $request->codigoRegional];
+        }
+        else {
+            $criterios[] = ['column'   => 'G3_gerencialLancamentos.idEmpresa',         'value' => $request->codigoEmpresa];
+        }
+       
         $this->lancamentos->addGetColumns(['tipoLancamento' => 'G3_gerencialLancamentos.idTipoLancamento',
                                             'valor'         => 'G3_gerencialLancamentos.valorLancamento',
                                             'historico'     => 'G3_gerencialLancamentos.historicoLancamento']);
 
         $dataDetalhe            = $this->lancamentos->getLancamentos(json_encode($criterios));
+
         $reportData             = ['dataDetalhe'            => $dataDetalhe,
                                    'nomeConta'              => $dataDetalhe[0]->contaGerencial,
                                    'numeroContaGerencial'   => $dataDetalhe[0]->numeroContaGerencial,
@@ -722,7 +771,22 @@ class RelatorioGerencialController extends Controller
 
         $this->variacaoHorizontal   = $horizontal;
         $this->variacaoVertical     = $vertical;
-
     }
+
+    /**
+     *  gerencialRazaoContabil
+     *  Exibe todos os lançamentos (analítico) da conta contábil
+     * 
+     *  @param  Request
+     * 
+     *  @return view
+     */
+    public function gerencialRazaoContabil(Request $request) {
+        
+        $dbData = $this->lancamentos->razaoContabil(json_decode($request->dadosRazao));
+
+        return view('relatorios.gerencial.gerencialRazaoContabil', ['reportData' => $dbData]);
+    }
+
 
 }

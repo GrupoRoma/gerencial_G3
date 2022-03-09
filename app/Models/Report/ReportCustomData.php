@@ -137,109 +137,52 @@ class ReportCustomData extends Model
                 $rawJoin   .= $join->leftTable." ".($join->alias ?? '')."\t\t(nolock) ON ";
                 $rawJoin   .= ($join->alias ?? $join->leftTable).'.'.$join->leftColumn.' ';
                 $rawJoin   .= ($join->operator ?? ' = ');
-                $rawJoin   .= ($join->rightTable ?? $primaryTable).'.'.$join->rightColumn;
+                $rawJoin   .= ($join->rightColumnRAW ?? ($join->rightTable ?? $primaryTable).'.'.$join->rightColumn);
                 $rawJoin   .= "\n";
             }
         }
 
         // WHERE
+        $whereRaw = " 1 = 1\n ";
         if (isset($customData->filter)) {
-            $whereRaw = " 1 = 1\n ";
             foreach ($customData->filter as $count => $where) {
-                if (isset($where['columnName']) && !empty($where['columnName'])) {
-                    $whereRaw   .= "AND\t".$where['columnName'];
-                    $whereRaw   .= " ".($where['operator'] ?? '=');
-                    $whereRaw   .= " ".$where['value'];
+                if (isset($where->columnName) && !empty($where->columnName)) {
+                    $whereRaw   .= "AND\t".$where->columnName;
+                    $whereRaw   .= " ".($where->operator ?? '=');
+                    $whereRaw   .= " ".$where->value."\n";
                 }
             }
         }
         
+        // Filter Conditions
+        if (!empty($this->conditions))  {
+
+            foreach ($this->conditions as $row => $condition) {
+                 $operator    = strtoupper($condition['operator'] ?? '=');
+
+                 switch ($operator) {
+                     case 'IN':
+                     case 'NOT IN':
+                         if (is_array($condition['value']))     $value  = implode(",", $condition['value']);
+                         else                                   $value  = $condition['value'];
+                         $whereRaw .= "AND\t".$condition['columnName']." ". $operator . " (".$value.")\n";
+                         break;
+                     case 'RAW':
+                         $whereRaw  .= "AND\t".$condition['columnName']."\n";
+                         break;
+                     default:
+                         $whereRaw .= "AND\t".$condition['columnName']."\t".($operator ?? "=")."\t".$condition['value']."\n";
+                         break;
+                 }
+            }
+        }
+
 
         $SQLquery = "SELECT ".$select."\nFROM ".$from."\n".$rawJoin."\nWHERE ".$whereRaw."\n".$order."\n".$group;
-
+//dd($SQLquery);
         // Retorna os dados da consulta
         return DB::select($SQLquery);
     }
 
 
-     /* public function customData(object $customData) {
-        
-        // Custom data RAW
-        if (isset($customData->raw) && !empty($customData->raw)) {
-            return DB::select( DB::raw($customData->raw) );
-        }
-
-        // DEFINE TABELA DE CONSULTA
-        $primaryTable   = $customData->table;
-        $dbData = DB::table($primaryTable);
-
-        // SET COLUMN LIST
-        $dbData->select($customData->columns ?? '*');
-        
-        // SET ORDER BY
-        $dbData->orderBy($customData->order ?? '');
-
-        // JOIN TABLES
-        if (isset($customData->join)) {
-            foreach ($customData->join as $count => $join) {
-
-//                $rawJoin    = $join->leftTable."\t\t(nolock) ON ";
-                $rawJoin   = $join->leftTable.'.'.$join->leftColumn.' ';
-                $rawJoin   .= ($join->operator ?? ' = ');
-                $rawJoin   .= ($join->rightTable ?? $primaryTable).'.'.$join->rightColumn;
-
-                switch (strtoupper($join->type ?? 'INNER')) {
-                    case 'INNER':
-                    default:
-                        if ($join->raw ?? FALSE)    $dbData->join($join->leftTable, DB::raw($rawJoin));
-                        else {
-                            $dbData->join(  $join->leftTable, 
-                                            $join->leftTable.'.'.$join->leftColumn,
-                                            ($join->operator ?? '='),
-                                            ($join->rightTable ?? $primaryTable).'.'.$join->rightColumn);
-                        }
-                        break;
-                    case 'LEFT':
-                        if ($join->raw ?? FALSE)    $dbData->leftJoin($join->leftTable, DB::raw($rawJoin));
-                        else {
-                            $dbData->leftJoin(  $join->leftTable, 
-                                                $join->leftTable.'.'.$join->leftColumn,
-                                                ($join->operator ?? '='),
-                                                ($join->rightTable ?? $primaryTable).'.'.$join->rightColumn);
-                        }
-                        break;
-                    case 'RIGHT':
-                        if ($join->raw ?? FALSE)    $dbData->rightJoin($join->leftTable, DB::raw($rawJoin));
-                        else {
-                            $dbData->rightJoin(  $join->leftTable, 
-                                                $join->leftTable.'.'.$join->leftColumn,
-                                                ($join->operator ?? '='),
-                                                ($join->rightTable ?? $primaryTable).'.'.$join->rightColumn);
-                        }
-                        break;
-                    case 'CROSS':
-                        if ($join->raw ?? FALSE)    $dbData->crossJoin($rawJoin);
-                        else                        $dbData->crossJoin($join->table);
-
-                        break;
-                }
-            }
-        }
-
-        // WHERE
-        if (isset($customData->filter)) {
-            foreach ($customData->filter as $count => $where) {
-                if ($where->raw ?? FALSE)   $dbData->whereRaw($where->columnName);
-                else {
-                    $dbData->where( $where->columnName, 
-                                    ($where->operator ?? '='), 
-                                    $where->value);
-                }
-            }
-        }
-        
-        // Retorna os dados da consulta
-        return $dbData->get();
-    } */
-    
 }

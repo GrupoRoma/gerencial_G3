@@ -77,11 +77,20 @@ class GerencialParametroRateioController extends Controller
                 case 'codigoContaGerencialDestino':
                 case 'codigoCentroCustoOrigem':
                 case 'codigoCentroCustoDestino':
-                    $request->$column = implode(',', (array) $request->$column);
+
+//                    $columnData = array_filter((array) $request->column, function($value) { return !is_null($value) && $value !== '';});
+
+                    $gerencialParametroRateio->$column = implode(',', (array) $request->$column);
+//                    $gerencialParametroRateio->$column = implode(',', $columnData);
+
+
+                    break;
+                default:
+                    $gerencialParametroRateio->$column = $request->$column;
                     break;
             }
-            $gerencialParametroRateio->$column = $request->$column;
         }
+//dd($gerencialParametroRateio);
 
         $gerencialParametroRateio->save();
         $request->session()->flash('message', 'Dados gravados com sucesso!');
@@ -125,6 +134,7 @@ class GerencialParametroRateioController extends Controller
      */
     public function update(Request $request, $id)
     {
+
         // Validação
         $validator = Validator::make($request->all(), $this->model->rules);
         if ($validator->fails()) {
@@ -143,12 +153,19 @@ class GerencialParametroRateioController extends Controller
                 case 'codigoContaGerencialDestino':
                 case 'codigoCentroCustoOrigem':
                 case 'codigoCentroCustoDestino':
-                    $request->$column = implode(',', (array) $request->$column);
+
+                    //$columnData = array_filter((array) $request->column, function($value) { return !is_null($value) && $value !== '';});
+
+                    $update->$column = implode(',', (array) $request->$column);
+                    //$update->$column = implode(',', $columnData);
+                    
+                    break;
+                default:
+                    $update->$column = $request->$column;
                     break;
             }
-            $update->$column = $request->$column;
         }
-
+//dd($update);
         $update->save();
         $request->session()->flash('message', 'Dados atualizados com sucesso!');
 

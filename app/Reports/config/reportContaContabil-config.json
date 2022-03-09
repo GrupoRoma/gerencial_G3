@@ -1,6 +1,6 @@
 {
-        "thisFile": "lancamentosGerenciais",
-        "configReport": { "reportName": "LANÇAMENTOS GERENCIAIS",
+        "thisFile": "reportContaContabil-config",
+        "configReport": { "reportName": "CONTAS CONTÁBEIS",
                              "pageFormat": "A4",
                              "pageSize": "297mm 210mm",
                              "orientation": "landscape",
@@ -9,7 +9,7 @@
                              "pageNumberOn": "footer",
                              "printCover": false
                            },
-        "reportHeader": { "title": "RELATÓRIO DE LANÇAMENTOS GERENCIAIS - GRUPO ROMA",
+        "reportHeader": { "title": "RELATÓRIO DE CONTAS CONTÁBEIS",
                              "subTitle": "",
                              "showDateTime": true,
                              "showLogo": true,

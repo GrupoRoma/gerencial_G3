@@ -546,7 +546,6 @@ class ReportGenerator extends Controller
         $headerColumns  = '';
         $csvData        = '';
 
-
         // Verifica as colunas retornadas pelos dados do relatório
         foreach ($this->dataColumnNames as $columnName) {
             // DATA CSV EXPORT

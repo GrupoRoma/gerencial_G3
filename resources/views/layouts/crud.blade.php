@@ -56,65 +56,65 @@
     };
 
 @endphp
-
-<div class="row mb-2">
-    <div class="col-xs-12 col-sm-4 col-md-4 pt-2 pb-2">
-        <!--// Novo -->
-        <button class="btn btn-secondary btn-sm" data-nav="{{route($routeName.'.create')}}" {{($saveEnabled ? 'disabled' : '')}}>
-            <span class="fa fa-file fa-lg"></span> <br>
-            <span class="btn-label">novo</span>
-        </button>
-
-        <!--// Gravar -->
-        <button type="submit" class="btn btn-secondary btn-sm" data-redir="{{route($routeName.'.index')}}" {{($saveEnabled ? '' : 'disabled')}}>
-            <span class="fa fa-save fa-lg"></span> <br>
-            <span class="btn-label">gravar</span>
-        </button>
-
-        <!--// Cancelar -->
-        <button class="btn btn-secondary btn-sm" data-nav="{{route($routeName.'.index')}}">
-            <span class="fa fa-times fa-lg"></span> <br>
-            <span class="btn-label">cancelar</span>
-        </button>
-
-        <!--// Ajuda -->
-        <button class="btn btn-secondary btn-sm">
-            <span class="fa fa-question fa-lg"></span> <br>
-            <span class="btn-label">ajuda</span>
-        </button>
-    </div>
-
-    <div class="col-xs-12 col-sm-4 col-md-4">
-      <h2 class="text-uppercase align-bottom">{{$model->viewTitle}}</h2>
-      <h5 class="text-uppercase align-bottom">{{($model->viewSubTitle ?? '')}}</h5>
-    </div>
-
-    <div class="col-xs-12 col-sm-4 col-md-4">
-      <input class="form-control mr-sm-2 align-top" id='tdSearch' type="search" placeholder="Pesquisar" aria-label="Search">
-    </div>
-</div>
-
-
-@yield('content')
-
-{{-- Modal para confirmação de exclusão de dados --}}
-<div class="modal fade" id="delete-confirm" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">EXCLUSÃO DE DADOS</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+<div id="CRUD-area">
+  <div class="row mb-2">
+      <div class="col-xs-12 col-sm-4 col-md-4 pt-2 pb-2">
+          <!--// Novo -->
+          <button class="btn btn-secondary btn-sm" data-nav="{{route($routeName.'.create')}}" {{($saveEnabled ? 'disabled' : '')}} data-target="#CRUD-area">
+              <span class="fa fa-file fa-lg"></span> <br>
+              <span class="btn-label">novo</span>
           </button>
-        </div>
-        <div class="modal-body">
-          <p>Confirma a exclusão dos dados?</p>
-          <div class="data-del"></div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger confirm">CONFIRMAR</button>
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+
+          <!--// Gravar -->
+          <button type="submit" class="btn btn-secondary btn-sm" data-redir="{{route($routeName.'.index')}}" {{($saveEnabled ? '' : 'disabled')}} data-target="#CRUD-area">
+              <span class="fa fa-save fa-lg"></span> <br>
+              <span class="btn-label">gravar</span>
+          </button>
+
+          <!--// Cancelar -->
+          <button class="btn btn-secondary btn-sm" data-nav="{{route($routeName.'.index')}}" data-target="#CRUD-area">
+              <span class="fa fa-times fa-lg"></span> <br>
+              <span class="btn-label">cancelar</span>
+          </button>
+
+          <!--// Ajuda -->
+          <button class="btn btn-secondary btn-sm">
+              <span class="fa fa-question fa-lg"></span> <br>
+              <span class="btn-label">ajuda</span>
+          </button>
+      </div>
+
+      <div class="col-xs-12 col-sm-4 col-md-4">
+        <h2 class="text-uppercase align-bottom">{{$model->viewTitle}}</h2>
+        <h5 class="text-uppercase align-bottom">{{($model->viewSubTitle ?? '')}}</h5>
+      </div>
+
+      <div class="col-xs-12 col-sm-4 col-md-4">
+        <input class="form-control mr-sm-2 align-top" id='tdSearch' type="search" placeholder="Pesquisar" aria-label="Search">
+      </div>
+  </div>
+
+
+  @yield('content')
+
+  {{-- Modal para confirmação de exclusão de dados --}}
+  <div class="modal fade" id="delete-confirm" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">EXCLUSÃO DE DADOS</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Confirma a exclusão dos dados?</p>
+            <div class="data-del"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger confirm">CONFIRMAR</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>

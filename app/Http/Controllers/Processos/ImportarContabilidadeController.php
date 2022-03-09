@@ -18,6 +18,7 @@ use App\Models\GerencialTipoLancamento;
 use App\Models\GerencialEstorno;
 
 use App\Models\GerencialPeriodo;
+use App\Models\GerencialRegional;
 
 class ImportarContabilidadeController extends Controller
 {
@@ -35,7 +36,7 @@ class ImportarContabilidadeController extends Controller
     protected   $periodo;
     protected   $estorno;
 
-        public function __construct() 
+    public function __construct() 
     {
         $this->importa              = new ImportarContabilidade;
         $this->contaGerencial       = new GerencialContaGerencial;
@@ -96,15 +97,13 @@ class ImportarContabilidadeController extends Controller
 
         set_time_limit(0);
 
-        // Inicializa a transação com o banco de dados
-        DB::beginTransaction();
-
         // IDENTIFICA AS EMPRESAS DA REGIONAL SELECIONADA
         $regionalEmpresas = GerencialEmpresas::where('codigoRegional', $request->codigoRegional)->get();
 
         // Atribui os códigos das empresas da regional à propriedade empresasRegional da Model ImportarContabilidade
         foreach ($regionalEmpresas as $data) {
-            $this->importa->empresasRegional[] = $data->codigoEmpresaERP;
+            $this->importa->empresasRegional[]      = $data->id;
+            $this->importa->empresasRegionalERP[]   = $data->codigoEmpresaERP;
         }
 
         if (!isset($this->importa->empresasRegional) || empty($this->importa->empresasRegional)) {
@@ -114,6 +113,9 @@ class ImportarContabilidadeController extends Controller
 
         // Atribui o código da Regional à propriedade codigoRegional da Model ImportarContabilidade
         $this->importa->codigoRegional = $request->codigoRegional;
+
+        // Inicializa a transação com o banco de dados
+        DB::beginTransaction();
 
         /**
          *  1. Período Gerencial
@@ -207,7 +209,9 @@ class ImportarContabilidadeController extends Controller
                 return view('processamento.validacao', ['errors' => $this->excecoes->errors]);
             }
             else {
-                $mensagem .= "<li>[EXCEÇÕES - OUTRAS CONTAS] - Outras Contas importado com sucesso";
+                foreach ($this->excecoes->infoMessage as $messages) {
+                    $mensagem .= "<li>".$messages['infoTitle']." - ".$messages['message']."</li>";
+                }
             }
         }
 
@@ -225,7 +229,12 @@ class ImportarContabilidadeController extends Controller
                 return view('processamento.validacao', ['errors' => $this->excecoes->errors]);
             }
             else {
-                $mensagem .= "<li>[EXCEÇÕES - AMORTIZAÇÕES] - Amortizações processadas com sucesso";
+                foreach ($this->excecoes->infoMessage as $messages) {
+                    $mensagem .= "<li>".$messages['infoTitle']." - ".$messages['message']."</li>";
+                }
+//                $mensagem .= "<li>[EXCEÇÕES - AMORTIZAÇÕES] - Amortizações processadas com sucesso";
+
+                $this->excecoes->infoMessage = [];
             }
         }
 
@@ -255,10 +264,11 @@ class ImportarContabilidadeController extends Controller
          */
         DB::commit();
 
+        $regional   = GerencialRegional::find($request->codigoRegional);
+
         // Retorna a mensagem de conclusão da importação dos lançamentos contábeis
         return ("<span id='showMsg' data-title='IMPORTAÇÃO DE LANÇAMENTOS CONTÁBEIS'
-                            data-message='<ul>".$mensagem."</ul>'></span>");
-
+                            data-message='<h4>'.$regional->descricaoRegional.'</h4><ul>".$mensagem."</ul>'></span>");
     }
 
     /**
@@ -338,8 +348,7 @@ class ImportarContabilidadeController extends Controller
         // Carrega os lancamentos do período e regional informados
         $this->importa->getLancamentosContabeis($request);
 
-        // Verifica se existem lançamentos gerenciais para as condições informadas
-        // caso exista, remove todos os lançamentos para evitar duplicidade
+        // [DELETE] Remove todos os lançamentos para evitar duplicidade
         $this->lancamentoGerencial->deleteLancamentosGerenciais([['fieldName' => 'idTipoLancamento', 'values' => 1],
                                                                  ['fieldName' => 'idEmpresa', 'fieldComparison' => 'IN', 'values' => $this->importa->empresasRegional]]);
 
@@ -371,7 +380,7 @@ class ImportarContabilidadeController extends Controller
             // Identifica as contas de receita, custo, impostos e bônus
             $contasVeiculos     = $this->contaGerencial->getContasVeiculos();
             if ($contasVeiculos) {
-                // Processa as vendas encontradas para realozação dos valores
+                // Processa as vendas encontradas para realocação dos valores
                 foreach ($receitaCusto as $row => $dataVeiculos) {
                     // Carrega os dados da empresa de destino para identificação no histórico do lançamento
                     $empresaDestino = GerencialEmpresas::where('codigoEmpresaERP', $dataVeiculos['codigoEmpresaVenda'])->get();
@@ -465,7 +474,7 @@ class ImportarContabilidadeController extends Controller
                             // idTipoLancamento = 1 = [AUTOMÁTICO]
 
                             // Registra a contrapartida apenas se as empresas de ORIGEM e DESTINO forem DIFERENTES
-                            if ($dataVeiculos['codigoEmpresaOrigem'] != $dataVeiculos['codigoEmpresaVenda']) {
+#                            if ($dataVeiculos['codigoEmpresaOrigem'] != $dataVeiculos['codigoEmpresaVenda']) {
                             $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
                                                             'mesLancamento'         => $this->periodo->mesAtivo,
                                                             'codigoContaContabil'   => $infoConta['codigoContaContabil'], //$infoConta['contaContabil'],
@@ -477,7 +486,7 @@ class ImportarContabilidadeController extends Controller
                                                             'idTipoLancamento'      => 1,       // [A] AUTOMÁTICO
                                                             'historicoLancamento'   => '[A - AUTOMÁTICO | IC | REC e CST] '.$historicoOrigem,
                                                             'numeroDocumento'       => $dataVeiculos['numeroDocumento']];
-                            }
+#                            }
                             
                             // Prepara os dados para inclusão do lançamento gerencial DESTINO
                             // idTipoLancamento = 1 = [A - AUTOMÁTICO]
@@ -502,8 +511,7 @@ class ImportarContabilidadeController extends Controller
                 return FALSE;
             }
         }   //--// Receita, Custo, Impostos
-
-
+#        DB::rollBack();
 
         //--/ 10. Apura os Valores de Bônus Empresa
         $bonusEmpresa = $this->importa->getBonusEmpresa();
@@ -530,7 +538,8 @@ class ImportarContabilidadeController extends Controller
 
                 if($data['valorBonus'] > 0) {
 
-                    // Registra a contrapartida apenas se as empresas de ORIGEM e DESTINO forem DIFERENTES
+                    // Registra os lançamentos de contrapartida e de débito do Bônus 
+                    // se as empresas de ORIGEM e DESTINO forem DIFERENTES
                     if ($data['codigoEmpresaOrigem'] != $data['codigoEmpresaVenda'])  {
                         // Deduz o valor na origem (Lançamento a Crédito)
                         $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
@@ -544,20 +553,20 @@ class ImportarContabilidadeController extends Controller
                                                         'idTipoLancamento'      => 1,       // [A] AUTOMÁTICO
                                                         'historicoLancamento'   => '[A - AUTOMÁTICO | BÔNUS EMPRESA - CONTRAPARTIDA] '.$historicoOrigem,
                                                         'numeroDocumento'       => $data['numeroDocumento']];
-                    }
 
-                    // Registra o valor do bõnus no destino (Lançamento a Débito)
-                    $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
-                                                     'mesLancamento'         => $this->periodo->mesAtivo,
-                                                     'codigoContaContabil'   => $data['contaContabil'],
-                                                     'idEmpresa'             => $empresaDestinoID,
-                                                     'centroCusto'           => $data['codigoCentroCusto'],
-                                                     'idContaGerencial'      => $data['codigoContaGerencial'],
-                                                     'creditoDebito'         => 'DEB',
-                                                     'valorLancamento'       => ($data['valorBonus'] * -1),
-                                                     'idTipoLancamento'      => 1,       // [A] AUTOMÁTICO
-                                                     'historicoLancamento'   => '[A - AUTOMÁTICO | BÔNUS EMPRESA - REGISTRO NO DESTINO] '.$historicoDestino,
-                                                     'numeroDocumento'       => $data['numeroDocumento']];
+                        // Registra o valor do bõnus no destino (Lançamento a Débito)
+                        $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
+                                                        'mesLancamento'         => $this->periodo->mesAtivo,
+                                                        'codigoContaContabil'   => $data['contaContabil'],
+                                                        'idEmpresa'             => $empresaDestinoID,
+                                                        'centroCusto'           => $data['codigoCentroCusto'],
+                                                        'idContaGerencial'      => $data['codigoContaGerencial'],
+                                                        'creditoDebito'         => 'DEB',
+                                                        'valorLancamento'       => ($data['valorBonus'] * -1),
+                                                        'idTipoLancamento'      => 1,       // [A] AUTOMÁTICO
+                                                        'historicoLancamento'   => '[A - AUTOMÁTICO | BÔNUS EMPRESA - REGISTRO NO DESTINO] '.$historicoDestino,
+                                                        'numeroDocumento'       => $data['numeroDocumento']];
+                    }
                 }
             }
         }   //---// BÔNUS EMPRESA
@@ -589,7 +598,8 @@ class ImportarContabilidadeController extends Controller
                 }
 
                 if($data['valorHoldBack'] > 0) {
-                    // Regista a contrapartida na origem apenas se as empresas de ORIGEM e DESTINO foram DIFERENTES
+                    // Regista o9s lançamentos de contrapartida e de Débito
+                    // se as empresas de ORIGEM e DESTINO foram DIFERENTES
                     if ($data['codigoEmpresaOrigem'] != $data['codigoEmpresaVenda']) {
                         // Deduz o valor na origem (Lançamento a Crédito)
                         $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
@@ -603,20 +613,20 @@ class ImportarContabilidadeController extends Controller
                                                         'idTipoLancamento'      => 1,       // [A] AUTOMÁTICO
                                                         'historicoLancamento'   => '[A - AUTOMÁTICO | IC | HOLD BACK] '.$historicoOrigem,
                                                         'numeroDocumento'       => $data['numeroDocumento']];
-                    }
 
-                    // Registra o valor do bõnus no destino (Lançamento a Débito)
-                    $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
-                                                     'mesLancamento'         => $this->periodo->mesAtivo,
-                                                     'codigoContaContabil'   => NULL,
-                                                     'idEmpresa'             => $data['codigoEmpresaVenda'], //$empresaDestino,
-                                                     'centroCusto'           => $data['codigoCentroCusto'],
-                                                     'idContaGerencial'      => $data['codigoContaGerencial'],
-                                                     'creditoDebito'         => 'CRD',
-                                                     'valorLancamento'       => $data['valorHoldBack'],
-                                                     'idTipoLancamento'      => 1,       // [A] AUTOMÁTICO
-                                                     'historicoLancamento'   => '[A - AUTOMÁTICO | HOLD BACK] '.$historicoOrigem,
-                                                     'numeroDocumento'       => $data['numeroDocumento']];
+                        // Registra o valor do bõnus no destino (Lançamento a Débito)
+                        $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
+                                                        'mesLancamento'         => $this->periodo->mesAtivo,
+                                                        'codigoContaContabil'   => NULL,
+                                                        'idEmpresa'             => $data['codigoEmpresaVenda'], //$empresaDestino,
+                                                        'centroCusto'           => $data['codigoCentroCusto'],
+                                                        'idContaGerencial'      => $data['codigoContaGerencial'],
+                                                        'creditoDebito'         => 'CRD',
+                                                        'valorLancamento'       => $data['valorHoldBack'],
+                                                        'idTipoLancamento'      => 1,       // [A] AUTOMÁTICO
+                                                        'historicoLancamento'   => '[A - AUTOMÁTICO | HOLD BACK] '.$historicoOrigem,
+                                                        'numeroDocumento'       => $data['numeroDocumento']];
+                    }
                 }
             }
         }   //--// Hold Back
@@ -642,7 +652,8 @@ class ImportarContabilidadeController extends Controller
                 $historicoOrigem    = ' VEIC: '.$data['codigoVeiculo']." DEST: ".$nomeEmpresaVenda;
                 $historicoDestino   = ' VEIC: '.$data['codigoVeiculo']." ORIG: ".$data['nomeEmpresaOrigem'];
 
-                // Registra a contrapartida na origem apenas se as empresas de ORIGEM e DESTINO forem DIFERENTES
+                // Registra os lançamentos de contrapartida e de crédito
+                // se as empresas de ORIGEM e DESTINO forem DIFERENTES
                 if ($data['empresaOrigem'] != $data['empresaVenda']) {
                     // Deduz o valor na origem (Lançamento a Débito)
                     $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
@@ -656,20 +667,19 @@ class ImportarContabilidadeController extends Controller
                                                     'idTipoLancamento'      => 1,       // [A] AUTOMÁTICO
                                                     'historicoLancamento'   => '[A - AUTOMÁTICO | BÔNUS FÁBRICA] '.$historicoOrigem,
                                                     'numeroDocumento'       => $data['numeroDocumento']];
+                    // Registra o valor no destino (Lançamento a crédito)
+                    $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
+                                                    'mesLancamento'         => $this->periodo->mesAtivo,
+                                                    'codigoContaContabil'   => NULL, //$contaContabil,
+                                                    'idEmpresa'             => $codigoEmpresaVenda,
+                                                    'centroCusto'           => $this->centroCusto->getCodigoCentroCusto($data['estoque'], 'ERP'),
+                                                    'idContaGerencial'      => $this->contaGerencial->contaGerencialVeiculos('BFB'),
+                                                    'creditoDebito'         => 'DEB',
+                                                    'valorLancamento'       => ($data['valorBonusFabrica'] * -1),
+                                                    'idTipoLancamento'      => 1,       // [A] AUTOMÁTICO
+                                                    'historicoLancamento'   => '[A - AUTOMÁTICO | BÔNUS FÁBRICA] '.$historicoDestino,
+                                                    'numeroDocumento'       => $data['numeroDocumento']];
                 }
-
-                // Registra o valor no destino (Lançamento a crédito)
-                $lancamentosVeiculos[]        = ['anoLancamento'         => $this->periodo->anoAtivo,
-                                                 'mesLancamento'         => $this->periodo->mesAtivo,
-                                                 'codigoContaContabil'   => NULL, //$contaContabil,
-                                                 'idEmpresa'             => $codigoEmpresaVenda,
-                                                 'centroCusto'           => $this->centroCusto->getCodigoCentroCusto($data['estoque'], 'ERP'),
-                                                 'idContaGerencial'      => $this->contaGerencial->contaGerencialVeiculos('BFB'),
-                                                 'creditoDebito'         => 'DEB',
-                                                 'valorLancamento'       => ($data['valorBonusFabrica'] * -1),
-                                                 'idTipoLancamento'      => 1,       // [A] AUTOMÁTICO
-                                                 'historicoLancamento'   => '[A - AUTOMÁTICO | BÔNUS FÁBRICA] '.$historicoDestino,
-                                                 'numeroDocumento'       => $data['numeroDocumento']];
             }
         }   //--// Bônus Fábrica
 
@@ -723,9 +733,10 @@ class ImportarContabilidadeController extends Controller
                 if($dbLancamentos) {
 
                     foreach ($dbLancamentos as $row => $dataLancamento) {
+
                         $lancamentoEstorno[]    = [ 'anoLancamento'         => $request->anoReferencia,
                                                     'mesLancamento'         => $request->mesReferencia,
-                                                    'codigoContaContabil'   => $dataLancamento->contaContabil,
+                                                    'codigoContaContabil'   => $dataLancamento->codigoContaContabilERP,
                                                     'idEmpresa'             => $dataLancamento->codigoEmpresa,
                                                     'centroCusto'           => $dataLancamento->codigoCentroCusto,
                                                     'idContaGerencial'      => $dataLancamento->codigoContaGerencial,

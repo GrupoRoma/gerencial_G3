@@ -14,16 +14,18 @@ class GerencialParametroCentroCusto extends Model
     protected $guarded      = ['id'];
 
     public $viewTitle       = 'Transferência de Centro de Custo';
-    public $columnList      = ['idCentroCustoOrigem',  'idCentroCustoDestino', 'parametroAtivo'];
+    public $columnList      = ['idEmpresa', 'idCentroCustoOrigem',  'idCentroCustoDestino', 'parametroAtivo'];
 
-    public $columnAlias     = ['idCentroCustoOrigem'    => 'Centro de Custo de Origem',
+    public $columnAlias     = [ 'idEmpresa'             => 'Empresa Vinculada',
+                                'idCentroCustoOrigem'    => 'Centro de Custo de Origem',
                                 'idCentroCustoDestino'  => 'Centro de Custo de Destino',
                                 'parametroAtivo'        => 'Parâmetro Ativo'];
 
     public $columnValue     = ['parametroAtivo'         => ['S'  => 'Sim', 'N'  => 'Não']];
     public $customType      = ['parametroAtivo'         => ['type'      => 'radio', 'values'    => ['S' => 'Sim', 'N' => 'Não']]];
 
-    public $rules           = ['idCentroCustoOrigem'    => 'required', 
+    public $rules           = [ 'idEmpresa'             => 'nullable',
+                                'idCentroCustoOrigem'   => 'required', 
                                 'idCentroCustoDestino'  => 'required', 
                                 'parametroAtivo'        => 'required'];
 
@@ -47,6 +49,17 @@ class GerencialParametroCentroCusto extends Model
         }
     }
 
+    public function vd_gerencialEmpresas($id = NULL) {
+        if (empty($id)) return '';
+        
+        $viewData = GerencialEmpresas::where('id', $id)->get();
+
+        foreach ($viewData as $row => $data) {
+            return $data->nomeAlternativo;
+        }
+    }
+
+
     public function fk_gerencialCentroCusto($columnValueName = 'id') {
         $fkData = GerencialCentroCusto::orderBy('siglaCentroCusto')->get();
 
@@ -58,5 +71,15 @@ class GerencialParametroCentroCusto extends Model
         return ['options' => $formValues, 'type' => '']; 
     }
 
+    public function fk_gerencialEmpresas($columnValueName = 'id') {
+        $fkData = GerencialEmpresas::orderBy('nomeAlternativo')->get();
+
+        $formValues = [];
+        foreach($fkData as $row => $data) {
+            $formValues[] = [$data->{$columnValueName}, $data->nomeAlternativo];
+        }
+
+        return ['options' => $formValues, 'type' => '']; 
+    }
 
 }
